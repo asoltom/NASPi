@@ -1,0 +1,25 @@
+# Evita subir dependencias de Node.js
+node_modules/
+.next/
+out/
+.cache/
+dist/
+
+# Archivos grandes innecesarios
+*.log
+*.lock
+yarn.lock
+package-lock.json
+
+# Evita archivos específicos de entornos locales
+.env
+.DS_Store
+.vscode/
+.idea/
+
+# Evita subir dependencias de Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
