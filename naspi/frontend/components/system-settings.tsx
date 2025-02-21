@@ -1,30 +1,46 @@
-import { useState, useEffect } from 'react'
+"use client"
+
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Network, HardDrive, Users } from 'lucide-react'
+import { Network, HardDrive, Users, Trash2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface User {
-  id: string;
-  username: string;
-  role: string;
+  id: string
+  username: string
+  role: string
 }
 
 interface TelematicData {
-  ip: string;
-  gateway: string;
-  mask: string;
-  dns: string;
+  ip: string
+  gateway: string
+  mask: string
+  dns: string
 }
 
 export default function SystemSettings() {
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' })
-  const [userMessage, setUserMessage] = useState('')
+  const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" })
+  const [userMessage, setUserMessage] = useState("")
   const [users, setUsers] = useState<User[]>([])
   const [telematic, setTelematic] = useState<TelematicData | null>(null)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -33,46 +49,70 @@ export default function SystemSettings() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/addUser')
+      const response = await fetch("/api/users")
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error)
+      console.error("Failed to fetch users:", error)
     }
   }
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch('/api/addUser', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
       })
       const data = await response.json()
       setUserMessage(data.message)
       if (response.ok) {
-        setNewUser({ username: '', password: '', role: 'user' })
+        setNewUser({ username: "", password: "", role: "user" })
         fetchUsers() // Refresh the user list
       }
     } catch (error) {
-      setUserMessage('An error occurred. Please try again.')
+      setUserMessage("An error occurred. Please try again.")
     }
   }
 
-  // Obtener información desde el backend
+  const handleDeleteUser = (user: User) => {
+    setUserToDelete(user)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
+
+    try {
+      const response = await fetch(`/api/users?id=${userToDelete.id}`, {
+        method: "DELETE",
+      })
+      const data = await response.json()
+      setUserMessage(data.message)
+      if (response.ok) {
+        fetchUsers() // Refresh the user list
+      }
+    } catch (error) {
+      setUserMessage("An error occurred while deleting the user.")
+    }
+
+    setIsDeleteDialogOpen(false)
+    setUserToDelete(null)
+  }
+
   const fetchTelematic = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/telematic');
-      if (!response.ok) throw new Error('Failed to fetch telematic info');
-      const data: TelematicData = await response.json();
-      setTelematic(data);
+      const response = await fetch("http://localhost:5000/api/telematic")
+      if (!response.ok) throw new Error("Failed to fetch telematic info")
+      const data: TelematicData = await response.json()
+      setTelematic(data)
     } catch (error) {
-      console.error('Error fetching telematic info:', error);
+      console.error("Error fetching telematic info:", error)
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -102,25 +142,25 @@ export default function SystemSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="ip-address">IP Address</Label>
-                  <Input id="ip-address" value={telematic?.ip || ''} readOnly />
+                  <Input id="ip-address" value={telematic?.ip || ""} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="subnet-mask">Subnet Mask</Label>
-                  <Input id="subnet-mask" value={telematic?.mask || ''} readOnly />
+                  <Input id="subnet-mask" value={telematic?.mask || ""} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gateway">Gateway</Label>
-                  <Input id="gateway" value={telematic?.gateway || ''} readOnly />
+                  <Input id="gateway" value={telematic?.gateway || ""} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dns">DNS Server</Label>
-                  <Input id="dns" value={telematic?.dns || ''} readOnly />
+                  <Input id="dns" value={telematic?.dns || ""} readOnly />
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="storage">
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
@@ -162,7 +202,7 @@ export default function SystemSettings() {
                     <Input
                       id="username"
                       value={newUser.username}
-                      onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                      onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
                       required
                     />
                   </div>
@@ -172,13 +212,13 @@ export default function SystemSettings() {
                       id="password"
                       type="password"
                       value={newUser.password}
-                      onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                       required
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select value={newUser.role} onValueChange={(value) => setNewUser({...newUser, role: value})}>
+                    <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
                       <SelectTrigger id="role">
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
@@ -189,10 +229,12 @@ export default function SystemSettings() {
                     </Select>
                   </div>
                 </div>
-                <Button type="submit" className="w-full sm:w-auto">Add User</Button>
+                <Button type="submit" className="w-full sm:w-auto">
+                  Add User
+                </Button>
               </form>
               {userMessage && <p className="mt-4 text-center">{userMessage}</p>}
-              
+
               <div className="mt-8">
                 <h3 className="text-lg font-medium mb-4">User List</h3>
                 <div className="overflow-x-auto">
@@ -201,6 +243,7 @@ export default function SystemSettings() {
                       <tr>
                         <th className="px-6 py-3">Username</th>
                         <th className="px-6 py-3">Role</th>
+                        <th className="px-6 py-3">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -208,6 +251,12 @@ export default function SystemSettings() {
                         <tr key={user.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                           <td className="px-6 py-4">{user.username}</td>
                           <td className="px-6 py-4">{user.role}</td>
+                          <td className="px-6 py-4">
+                            <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(user)}>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              <span className="hidden sm:inline">Delete</span>
+                            </Button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -218,6 +267,22 @@ export default function SystemSettings() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              {userToDelete && <strong> {userToDelete.username}</strong>}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteUser}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
