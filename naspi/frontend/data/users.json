@@ -6,20 +6,20 @@
     "role": "admin"
   },
   {
-    "id": "2",
-    "username": "TestUser",
-    "password": "test123",
-    "role": "user"
-  },
-  {
     "id": "3",
-    "username": "Clavileno",
-    "password": "2727",
+    "username": "testClavi",
+    "password": "1234",
     "role": "user"
   },
   {
     "id": "4",
-    "username": "TestAdmin",
+    "username": "test",
+    "password": "1234",
+    "role": "user"
+  },
+  {
+    "id": "4",
+    "username": "testAdmin",
     "password": "1234",
     "role": "admin"
   }
