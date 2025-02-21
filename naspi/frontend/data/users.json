@@ -7,38 +7,14 @@
   },
   {
     "id": "2",
-    "username": "CLAVILENO",
-    "password": "2727",
-    "role": "user"
-  },
-  {
-    "id": "3",
     "username": "TestUser",
     "password": "test123",
     "role": "user"
   },
   {
-    "id": "4",
-    "username": "testAdmin",
-    "password": "testAdmin",
-    "role": "admin"
-  },
-  {
-    "id": "5",
+    "id": "3",
     "username": "Clavileno",
-    "password": "1234",
-    "role": "user"
-  },
-  {
-    "id": "6",
-    "username": "Juanjo",
     "password": "2727",
-    "role": "user"
-  },
-  {
-    "id": "7",
-    "username": "Asun",
-    "password": "asun37",
     "role": "user"
   }
 ]
