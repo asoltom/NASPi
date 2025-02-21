@@ -13,14 +13,22 @@ interface User {
   role: string;
 }
 
+interface TelematicData {
+  ip: string;
+  gateway: string;
+  mask: string;
+  dns: string;
+}
+
 export default function SystemSettings() {
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' })
   const [userMessage, setUserMessage] = useState('')
   const [users, setUsers] = useState<User[]>([])
+  const [telematic, setTelematic] = useState<TelematicData | null>(null)
 
   useEffect(() => {
     fetchUsers()
-    fecthTelematic()
+    fetchTelematic()
   }, [])
 
   const fetchUsers = async () => {
@@ -53,30 +61,19 @@ export default function SystemSettings() {
       setUserMessage('An error occurred. Please try again.')
     }
   }
-  //-------------------------------------------------------------------------------------------------------------------
+
   // Obtener información desde el backend
-  const fecthTelematic = async () => {
+  const fetchTelematic = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/telematic');
-      const data = await response.json();
-      //poner info
-      setTelematic(data)
+      if (!response.ok) throw new Error('Failed to fetch telematic info');
+      const data: TelematicData = await response.json();
+      setTelematic(data);
     } catch (error) {
       console.error('Error fetching telematic info:', error);
     }
   };
 
-  function setTelematic(data: { [x: string]: string }){
-    //ip-address
-    var InputIp = document.getElementById("ip-address")
-    var InputGateway = document.getElementById("gateway")
-    var InputMask = document.getElementById("subnet-mask")
-
-    InputIp?.setAttribute("value",""+data["ip"])
-    InputGateway?.setAttribute("value",""+data["gateway"])
-    InputMask?.setAttribute("value",""+data["mask"])
-  }
-  //-------------------------------------------------------------------------------------------------------------------
   return (
     <div className="space-y-6">
       <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">System Settings</h1>
@@ -95,6 +92,7 @@ export default function SystemSettings() {
             <span className="hidden sm:inline">Users</span>
           </TabsTrigger>
         </TabsList>
+
         <TabsContent value="network">
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
@@ -104,25 +102,25 @@ export default function SystemSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="ip-address">IP Address</Label>
-                  <Input id="ip-address" placeholder="192.168.1.100" />
+                  <Input id="ip-address" value={telematic?.ip || ''} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="subnet-mask">Subnet Mask</Label>
-                  <Input id="subnet-mask" placeholder="255.255.255.0" />
+                  <Input id="subnet-mask" value={telematic?.mask || ''} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gateway">Gateway</Label>
-                  <Input id="gateway" placeholder="192.168.1.1" />
+                  <Input id="gateway" value={telematic?.gateway || ''} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dns">DNS Server</Label>
-                  <Input id="dns" placeholder="8.8.8.8" />
+                  <Input id="dns" value={telematic?.dns || ''} readOnly />
                 </div>
               </div>
-              <Button className="w-full sm:w-auto">Save Network Settings</Button>
             </CardContent>
           </Card>
         </TabsContent>
+        
         <TabsContent value="storage">
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
@@ -150,6 +148,7 @@ export default function SystemSettings() {
             </CardContent>
           </Card>
         </TabsContent>
+
         <TabsContent value="users">
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
@@ -200,8 +199,8 @@ export default function SystemSettings() {
                   <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                       <tr>
-                        <th scope="col" className="px-6 py-3">Username</th>
-                        <th scope="col" className="px-6 py-3">Role</th>
+                        <th className="px-6 py-3">Username</th>
+                        <th className="px-6 py-3">Role</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -222,4 +221,3 @@ export default function SystemSettings() {
     </div>
   )
 }
-

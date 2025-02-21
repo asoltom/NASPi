@@ -39,8 +39,9 @@ def get_telematic_info():
     IPAddr = socket.gethostbyname(hostname)
     subnet_mask_info = get_subnet_mask(hostname)
     gateway_info = str(get_default_gateway())
+    dns_info = get_dns_info()
 
-    info = dict(ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info)
+    info = dict(ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info, dns=dns_info)
     
     return info
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -71,6 +72,20 @@ def get_default_gateway():
         print(f"Error al obtener la puerta de enlace predeterminada: {e}")
         return None
 #-----------------------------------------------------------------------------------------------------------------------------------
+def get_dns_info():
+    """Obtiene los servidores DNS del sistema en Linux/Raspberry Pi."""
+    try:
+        dns_servers = []
+        with open("/etc/resolv.conf", "r") as f:
+            for line in f:
+                if line.startswith("nameserver"):
+                    dns_servers.append(line.split()[1])
+        return dns_servers if dns_servers else "No DNS found"
+    except Exception as e:
+        print(f"Error al obtener los servidores DNS: {e}")
+        return None
+
+#-----------------------------------------------------------------------------------------------------------------------------------
 # path:string --> get_disk() --> stat:tupla
 # Descripción: Función encargada de devolver el tamaño del disco (total, usado, libre) en forma de tupla
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -82,10 +97,9 @@ def get_disk(path):
 # Descripción: Función encargada de mostrar por pantalla el diccionario "info" que contiene toda la información acerca del sistema
 #-----------------------------------------------------------------------------------------------------------------------------------
 def show_info(info):
-    print("")
-    print("--------------------------------------------------")
-    for i in info:
-        print(i.capitalize()+": "+info[i])
+    print("\n--------------------------------------------------")
+    for key, value in info.items():
+        print(f"{key.capitalize()}: {value}")
     print("--------------------------------------------------")
     
     return
