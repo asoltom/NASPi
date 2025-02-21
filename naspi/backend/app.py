@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS  # Importar CORS
 import os
+import Info_checker as info
 
 app = Flask(__name__)
+CORS(app)  # Habilitar CORS en toda la app
 
 # Ruta donde están montados los SSD (puedes ajustar esto según tu configuración)
 RAID_PATH = "/mnt/raid"
@@ -49,5 +52,20 @@ def upload_file():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+#------------------------------------------------------------------------------------------------------------------
+# Ruta para recoger datos de telematica
+# GET:method --> /api/telematic --> [ip,gateway,mask]]
+#------------------------------------------------------------------------------------------------------------------
+@app.route('/api/telematic', methods=['GET'])
+def get_telematic():
+    try:
+        # Recoger datos
+        data = info.get_telematic_info()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+#------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

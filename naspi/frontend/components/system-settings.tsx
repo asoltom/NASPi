@@ -20,6 +20,7 @@ export default function SystemSettings() {
 
   useEffect(() => {
     fetchUsers()
+    fecthTelematic()
   }, [])
 
   const fetchUsers = async () => {
@@ -52,7 +53,30 @@ export default function SystemSettings() {
       setUserMessage('An error occurred. Please try again.')
     }
   }
+  //-------------------------------------------------------------------------------------------------------------------
+  // Obtener información desde el backend
+  const fecthTelematic = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/telematic');
+      const data = await response.json();
+      //poner info
+      setTelematic(data)
+    } catch (error) {
+      console.error('Error fetching telematic info:', error);
+    }
+  };
 
+  function setTelematic(data: { [x: string]: string }){
+    //ip-address
+    var InputIp = document.getElementById("ip-address")
+    var InputGateway = document.getElementById("gateway")
+    var InputMask = document.getElementById("subnet-mask")
+
+    InputIp?.setAttribute("value",""+data["ip"])
+    InputGateway?.setAttribute("value",""+data["gateway"])
+    InputMask?.setAttribute("value",""+data["mask"])
+  }
+  //-------------------------------------------------------------------------------------------------------------------
   return (
     <div className="space-y-6">
       <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">System Settings</h1>
