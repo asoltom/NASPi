@@ -7,7 +7,11 @@
 import socket
 import psutil
 import shutil
+from gpiozero import CPUTemperature # pip install gpiozero
 #-----------------------------------------------------------------------------------------------------------------------------------
+# Variables Globales
+
+nas_path="c:/" # Path de la carpeta compartida del NAS
 #-----------------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -24,10 +28,11 @@ def get_info():
     RAM=""+str(RAM_used_GB)+" GB ("+str(psutil.virtual_memory()[2])+"%)"
 
     cpu_usage=str(psutil.cpu_percent(4))+" %"
+    cpu_Temp = CPUTemperature()
 
-    disk_stat=get_disk(path="c:/")
+    disk_stat=get_disk(path=nas_path)
 
-    info = dict(host=hostname,ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info,used_CPU=cpu_usage,used_RAM=RAM,disk=str(disk_stat))
+    info = dict(host=hostname,ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info,used_CPU=cpu_usage,Temp_CPU=cpu_Temp,used_RAM=RAM,disk=str(disk_stat))
     
     return info
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -42,6 +47,26 @@ def get_telematic_info():
     dns_info = get_dns_info()
 
     info = dict(ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info, dns=dns_info)
+    
+    return info
+#-----------------------------------------------------------------------------------------------------------------------------------
+# --> get_hardware_info() --> info:dict
+# Descripción: Función principal encargada de recabar la información del hardware y devolverla en forma de diccionario
+#-----------------------------------------------------------------------------------------------------------------------------------
+def get_hardware_info():
+    RAM_used_GB = round(psutil.virtual_memory()[3]/1000000000, 2) # Memoria RAM usada en GB
+    RAM=""+str(RAM_used_GB)+" GB ("+str(psutil.virtual_memory()[2])+"%)"
+
+    cpu_usage=str(psutil.cpu_percent(4))+" %"
+    try:
+        from gpiozero import CPUTemperature  # Importar solo si está disponible
+        cpu_Temp = CPUTemperature().temperature  # Obtener temperatura
+    except (ImportError, AttributeError):
+        cpu_Temp = 0  # Si no se puede calcular, devolver 0
+
+    disk_stat=get_disk(path=nas_path)
+
+    info = dict(used_CPU=cpu_usage,Temp_CPU=cpu_Temp,used_RAM=RAM,disk=str(disk_stat))
     
     return info
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -109,10 +134,12 @@ def show_info(info):
 #-----------------------------------------------------------------------------------------------------------------------------------
 def main():
 
-    info = get_info()
-    show_info(info)
+    #info = get_info()
+    #show_info(info)
     telematic_info = get_telematic_info()
     show_info(telematic_info)
+    hardware_info = get_hardware_info()
+    show_info(hardware_info)
 
     return
 

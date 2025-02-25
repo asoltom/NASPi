@@ -64,6 +64,18 @@ def get_telematic():
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+#------------------------------------------------------------------------------------------------------------------
+# Ruta para recoger datos de hardware
+# GET:method --> /api/hardware --> [CPU usada, Temp CPU, RAM usada, Uso del disco]]
+#------------------------------------------------------------------------------------------------------------------
+@app.route('/api/hardware', methods=['GET'])
+def get_hardware():
+    try:
+        # Recoger datos
+        data = info.get_hardware_info()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
 #------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------
