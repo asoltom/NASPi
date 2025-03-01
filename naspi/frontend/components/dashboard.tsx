@@ -25,8 +25,12 @@ export default function Dashboard({ user }: DashboardProps) {
   const [hardware, setHardware] = useState<HardwareData | null>(null)
 
   useEffect(() => {
-    fetchHardware()
-  }, [])
+    fetchHardware(); // Llamado inicial
+
+    const interval = setInterval(fetchHardware, 3000); // Llama a fetchHardware cada 5 segundos
+
+    return () => clearInterval(interval); // Limpieza del intervalo al desmontar
+  }, []);
 
   const fetchHardware = async () => {
     try {
