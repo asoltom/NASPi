@@ -10,7 +10,8 @@ CORS(app)  # Habilitar CORS en toda la app
 RAID_PATH = "/mnt/raid"
 
 # Crear la carpeta RAID si no existe (útil para pruebas locales)
-os.makedirs(RAID_PATH, exist_ok=True)
+if not os.path.ismount(RAID_PATH):
+    raise RuntimeError(f"El RAID no está montado en {RAID_PATH}. Asegúrate de configurarlo en OMV antes de ejecutar la aplicación.")
 
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para listar archivos
