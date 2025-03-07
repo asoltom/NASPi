@@ -9,7 +9,7 @@ import psutil
 import subprocess
 
 # Lista de discos a monitorear (ajusta según tu configuración)
-DISKS = ["/mnt/ssd1", "/mnt/ssd2", "/mnt/ssd3"]
+DISKS = ["/mnt/raid"]
 DEVICES = ["/dev/sda", "/dev/sdb", "/dev/sdc"]
 #-----------------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES

@@ -11,7 +11,7 @@ from gpiozero import CPUTemperature # pip install gpiozero
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Variables Globales
 
-nas_path="c:/" # Path de la carpeta compartida del NAS
+RAID_PATH = "/mnt/raid" # Path de la carpeta compartida del NAS
 #-----------------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ def get_info():
     cpu_usage=str(psutil.cpu_percent(4))+" %"
     cpu_Temp = CPUTemperature()
 
-    disk_stat=get_disk(path=nas_path)
+    disk_stat=get_disk(path=RAID_PATH)
 
     info = dict(host=hostname,ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info,used_CPU=cpu_usage,Temp_CPU=cpu_Temp,used_RAM=RAM,disk=str(disk_stat))
     
@@ -64,7 +64,7 @@ def get_hardware_info():
     except (ImportError, AttributeError):
         cpu_Temp = 0  # Si no se puede calcular, devolver 0
 
-    disk_stat=get_disk(path=nas_path)
+    disk_stat=get_disk(path=RAID_PATH)
 
     info = dict(used_CPU=cpu_usage,Temp_CPU=cpu_Temp,used_RAM=RAM,disk=str(disk_stat))
     
