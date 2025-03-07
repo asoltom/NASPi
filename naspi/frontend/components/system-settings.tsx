@@ -105,7 +105,7 @@ export default function SystemSettings() {
 
   const fetchTelematic = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/telematic")
+      const response = await fetch("http://naspi.local:5000/api/telematic")
       if (!response.ok) throw new Error("Failed to fetch telematic info")
       const data: TelematicData = await response.json()
       setTelematic(data)
