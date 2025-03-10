@@ -62,7 +62,7 @@ export default function SystemSettings() {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch("/api/users", {
+      const response = await fetch("http://naspi.local:5000/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
@@ -87,7 +87,7 @@ export default function SystemSettings() {
     if (!userToDelete) return
 
     try {
-      const response = await fetch(`/api/users?id=${userToDelete.id}`, {
+      const response = await fetch(`http://naspi.local:5000/api/users?id=${userToDelete.id}`, {
         method: "DELETE",
       })
       const data = await response.json()
