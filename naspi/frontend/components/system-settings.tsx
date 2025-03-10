@@ -49,7 +49,7 @@ export default function SystemSettings() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/users")
+      const response = await fetch("http://naspi.local:5000/api/users")
       if (response.ok) {
         const data = await response.json()
         setUsers(data)

@@ -19,7 +19,10 @@ RAID_PATH = "/mnt/raid" # Path de la carpeta compartida del NAS
 # Descripción: Función principal encargada de recabar toda la información y devolverla en forma de diccionario
 #-----------------------------------------------------------------------------------------------------------------------------------
 def get_info():
-    hostname = socket.gethostname()
+    try:
+        hostname = socket.gethostname()
+    except Exception as e:
+        hostname = socket.gethostname()+".local"
     IPAddr = socket.gethostbyname(hostname)
     subnet_mask_info = get_subnet_mask(hostname)
     gateway_info = str(get_default_gateway())
@@ -40,7 +43,10 @@ def get_info():
 # Descripción: Función principal encargada de recabar la información de telematica y devolverla en forma de diccionario
 #-----------------------------------------------------------------------------------------------------------------------------------
 def get_telematic_info():
-    hostname = socket.gethostname()
+    try:
+        hostname = socket.gethostname()
+    except Exception as e:
+        hostname = socket.gethostname()+".local"
     IPAddr = socket.gethostbyname(hostname)
     subnet_mask_info = get_subnet_mask(hostname)
     gateway_info = str(get_default_gateway())
