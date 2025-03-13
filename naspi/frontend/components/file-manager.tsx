@@ -14,7 +14,8 @@ export default function FileManager() {
     try {
       const response = await fetch('http://naspi.local:5000/api/files');
       const data = await response.json();
-      console.log("Data" + data)
+      console.log("Data: ")
+      console.log(data)
       setFiles(data);
     } catch (error) {
       console.error('Error fetching files:', error);
