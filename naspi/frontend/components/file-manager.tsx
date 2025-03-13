@@ -14,6 +14,7 @@ export default function FileManager() {
     try {
       const response = await fetch('http://naspi.local:5000/api/files');
       const data = await response.json();
+      console.log("Data" + data)
       setFiles(data);
     } catch (error) {
       console.error('Error fetching files:', error);
@@ -117,7 +118,7 @@ export default function FileManager() {
         <div className="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
           {/* Input oculto para seleccionar archivo */}
           <input type="file" id="file-input" className="hidden" onChange={handleFileChange} />
-          
+
           {/* Botón para abrir el selector de archivos */}
           <Button onClick={() => document.getElementById('file-input')?.click()}>
             <Upload className="w-4 h-4 mr-2" />
@@ -142,7 +143,7 @@ export default function FileManager() {
           <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Files and Folders</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
+          {/* <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
             {files.map((item, index) => (
               <div
                 key={index}
@@ -155,6 +156,14 @@ export default function FileManager() {
                   <File className={`w-12 h-12 flex-shrink-0 ${viewMode === 'grid' ? 'mx-auto mb-2' : 'mr-4'} text-gray-500 dark:text-gray-400`} />
                 )}
                 <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
+              </div>
+            ))}
+          </div> */}
+          <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
+            {files.map((item, index) => (
+              <div key={index}>
+                <p>Nombre: {item.name || "No name found"}</p>
+                <p>Tipo: {item.type || "No type found"}</p>
               </div>
             ))}
           </div>
