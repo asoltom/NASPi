@@ -7,6 +7,7 @@ import { Folder, File, Grid, List, Upload, Download, Trash, Search } from 'lucid
 export default function FileManager() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [files, setFiles] = useState<{ name: string; type: string }[]>([]);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   // Obtener la lista de archivos desde el backend
   const fetchFiles = async () => {
@@ -19,24 +20,7 @@ export default function FileManager() {
     }
   };
 
-  // Descargar un archivo
-  const downloadFile = async (filename: string) => {
-    try {
-      const response = await fetch(`http://naspi.local:5000/api/files/${filename}`);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading file:', error);
-    }
-  };
-
-  // Subir un archivo (cuando el usuario selecciona uno)
+  // Subir un archivo cuando se selecciona
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -52,12 +36,57 @@ export default function FileManager() {
 
       if (response.ok) {
         alert('File uploaded successfully!');
-        fetchFiles(); // Actualizar lista de archivos
+        fetchFiles();
       } else {
         console.error('Error uploading file:', await response.text());
       }
     } catch (error) {
       console.error('Error uploading file:', error);
+    }
+  };
+
+  // Descargar el archivo seleccionado
+  const handleDownload = async () => {
+    if (!selectedFile) {
+      alert('Select a file first!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://naspi.local:5000/api/files/${selectedFile}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = selectedFile;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
+
+  // Eliminar archivo (falta implementar en el backend)
+  const handleDelete = async () => {
+    if (!selectedFile) {
+      alert('Select a file first!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://naspi.local:5000/api/files/${selectedFile}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        alert('File deleted successfully!');
+        fetchFiles();
+      } else {
+        console.error('Error deleting file:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
     }
   };
 
@@ -86,23 +115,23 @@ export default function FileManager() {
           </Button>
         </div>
         <div className="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
-          <input
-            type="file"
-            id="file-input"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <label htmlFor="file-input">
-            <Button>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload
-            </Button>
-          </label>
-          <Button variant="outline">
+          {/* Input oculto para seleccionar archivo */}
+          <input type="file" id="file-input" className="hidden" onChange={handleFileChange} />
+          
+          {/* Botón para abrir el selector de archivos */}
+          <Button onClick={() => document.getElementById('file-input')?.click()}>
+            <Upload className="w-4 h-4 mr-2" />
+            Upload
+          </Button>
+
+          {/* Botón de descarga */}
+          <Button variant="outline" onClick={handleDownload}>
             <Download className="w-4 h-4 mr-2" />
             Download
           </Button>
-          <Button variant="outline">
+
+          {/* Botón de eliminación */}
+          <Button variant="outline" onClick={handleDelete}>
             <Trash className="w-4 h-4 mr-2" />
             Delete
           </Button>
@@ -117,7 +146,8 @@ export default function FileManager() {
             {files.map((item, index) => (
               <div
                 key={index}
-                className={`p-4 border rounded-lg ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}
+                className={`p-4 border rounded-lg ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden cursor-pointer`}
+                onClick={() => setSelectedFile(item.name)}
               >
                 {item.type === 'folder' ? (
                   <Folder className={`w-12 h-12 flex-shrink-0 ${viewMode === 'grid' ? 'mx-auto mb-2' : 'mr-4'} text-blue-500 dark:text-blue-400`} />
@@ -125,11 +155,6 @@ export default function FileManager() {
                   <File className={`w-12 h-12 flex-shrink-0 ${viewMode === 'grid' ? 'mx-auto mb-2' : 'mr-4'} text-gray-500 dark:text-gray-400`} />
                 )}
                 <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
-                {item.type !== 'folder' && (
-                  <Button variant="link" onClick={() => downloadFile(item.name)}>
-                    Download
-                  </Button>
-                )}
               </div>
             ))}
           </div>
