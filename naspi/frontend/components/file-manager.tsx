@@ -16,7 +16,14 @@ export default function FileManager() {
       const data = await response.json();
       console.log("Data: ")
       console.log(data)
-      setFiles(data);
+      
+      data.forEach(function (item: string){
+        let name = item.split('.').slice(0, -1).join('.') + "<br>";
+        let extension = item.split('.').pop();
+        console.log('File name:', name); 
+        console.log('File extension:', extension);
+        setFiles(data); 
+      });
     } catch (error) {
       console.error('Error fetching files:', error);
     }
