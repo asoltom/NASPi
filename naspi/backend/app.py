@@ -166,7 +166,8 @@ def upload_file():
     file.seek(0)  # Resetear el puntero del archivo después de leerlo
 
     # Guardar con un nombre seguro para evitar problemas
-    filename = secure_filename(file.filename)
+    #filename = secure_filename(file.filename)
+    filename = file.filename
     file_path = os.path.join(RAID_PATH, filename)
 
     # Evitar sobreescritura: si ya existe, añadir un sufijo
