@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS  # Importar CORS
+from werkzeug.utils import secure_filename
 import os
 import json
 import uuid
@@ -13,6 +14,10 @@ RAID_PATH = "/mnt/raid"
 
 # Ruta al archivo de usuarios
 USERS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'users.json')
+
+# Extensiones permitidas
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 # Crear la carpeta RAID si no existe (útil para pruebas locales)
 if not os.path.ismount(RAID_PATH):
@@ -140,16 +145,41 @@ def download_file(filename):
 # Ruta para subir un archivo
 # POST:method, file --> /api/files
 #------------------------------------------------------------------------------------------------------------------
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/api/files', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
+        return jsonify({"error": "No se ha enviado ningún archivo"}), 400
+
     file = request.files['file']
+    
     if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+        return jsonify({"error": "No se ha seleccionado ningún archivo"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Tipo de archivo no permitido"}), 400
+
+    if len(file.read()) > MAX_FILE_SIZE:
+        return jsonify({"error": "El archivo es demasiado grande"}), 400
+    file.seek(0)  # Resetear el puntero del archivo después de leerlo
+
+    # Guardar con un nombre seguro para evitar problemas
+    filename = secure_filename(file.filename)
+    file_path = os.path.join(RAID_PATH, filename)
+
+    # Evitar sobreescritura: si ya existe, añadir un sufijo
+    counter = 1
+    base, ext = os.path.splitext(filename)
+    while os.path.exists(file_path):
+        filename = f"{base}_{counter}{ext}"
+        file_path = os.path.join(RAID_PATH, filename)
+        counter += 1
+
     try:
-        file.save(os.path.join(RAID_PATH, file.filename))
-        return jsonify({"message": "File uploaded successfully"}), 200
+        file.save(file_path)
+        return jsonify({"message": "Archivo subido con éxito", "filename": filename}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

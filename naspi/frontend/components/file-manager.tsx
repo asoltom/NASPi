@@ -7,7 +7,6 @@ import { Folder, File, Grid, List, Upload, Download, Trash, Search } from 'lucid
 export default function FileManager() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [files, setFiles] = useState<{ name: string; type: string }[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Obtener la lista de archivos desde el backend
   const fetchFiles = async () => {
@@ -37,13 +36,13 @@ export default function FileManager() {
     }
   };
 
-  // Subir un archivo
-  const uploadFile = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selectedFile) return;
+  // Subir un archivo (cuando el usuario selecciona uno)
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     const formData = new FormData();
-    formData.append('file', selectedFile);
+    formData.append('file', file);
 
     try {
       const response = await fetch('http://naspi.local:5000/api/files', {
@@ -87,25 +86,18 @@ export default function FileManager() {
           </Button>
         </div>
         <div className="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
-          <form onSubmit={uploadFile} className="flex items-center space-x-2">
-            <input
-              type="file"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  setSelectedFile(e.target.files[0]);
-                }
-              }}
-              className="hidden"
-              id="file-upload"
-            />
-            <label htmlFor="file-upload">
-              <Button>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload
-              </Button>
-            </label>
-            <Button type="submit">Submit</Button>
-          </form>
+          <input
+            type="file"
+            id="file-input"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <label htmlFor="file-input">
+            <Button>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </Button>
+          </label>
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Download
