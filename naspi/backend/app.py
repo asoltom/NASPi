@@ -27,9 +27,21 @@ try:
 except Exception as e:
     print(f"Advertencia: No se pudo cambiar permisos de {USERS_FILE}: {e}")
 
-# Extensiones permitidas
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+# Extensiones permitidas (archivos comunes de oficina añadidos)
+ALLOWED_EXTENSIONS = {
+    # Texto, imágenes y documentos
+    'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif',
+    'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+    
+    # Archivos comprimidos
+    'zip', 'rar', '7z', 'tar', 'gz', 'tar.gz',
+    
+    # Videos
+    'mp4', 'avi', 'mkv', 'mov', 'wmv'
+}
+
+# Aumentar el tamaño máximo a 5GB
+MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024  # 5GB
 
 # Crear la carpeta RAID si no existe (útil para pruebas locales)
 if not os.path.ismount(RAID_PATH):
@@ -42,7 +54,7 @@ if not os.path.ismount(RAID_PATH):
 @app.route('/api/files', methods=['GET'])
 def list_files():
     try:
-        files = os.listdir(RAID_PATH)
+        files = [f for f in os.listdir(RAID_PATH) if f != "lost+found"]
         return jsonify(files)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
