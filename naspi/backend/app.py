@@ -142,6 +142,23 @@ def download_file(filename):
         return jsonify({"error": str(e)}), 500
 
 #------------------------------------------------------------------------------------------------------------------
+# Ruta para eliminar un archivo
+# DELETE:method --> /api/files/<filename> --> Eliminar archivo
+#------------------------------------------------------------------------------------------------------------------
+@app.route('/api/files/<filename>', methods=['DELETE'])
+def delete_file(filename):
+    file_path = os.path.join(RAID_PATH, filename)
+
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+            return jsonify({"message": "Archivo eliminado con éxito"}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Archivo no encontrado"}), 404
+
+#------------------------------------------------------------------------------------------------------------------
 # Ruta para subir un archivo
 # POST:method, file --> /api/files
 #------------------------------------------------------------------------------------------------------------------
