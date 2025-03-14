@@ -16,14 +16,17 @@ export default function FileManager() {
       const data = await response.json();
       console.log("Data: ")
       console.log(data)
-      
-      data.forEach(function (item: string){
-        let name = item.split('.').slice(0, -1).join('.') + "<br>";
-        let extension = item.split('.').pop();
-        console.log('File name:', name); 
-        console.log('File extension:', extension);
-        setFiles(data); 
+
+      // Transformamos la lista de strings en objetos con name y type
+      const files = data.map((item: string) => {
+        return {
+          name: item.split('.').slice(0, -1).join('.') || item, // Si no tiene ".", usar el nombre completo
+          type: item.includes('.') ? item.split('.').pop() : "" // Si no tiene extensión, guardar vacío
+        };
       });
+      console.log("Files processed:", files);
+      setFiles(files); // Guardamos el nuevo array en el estado
+
     } catch (error) {
       console.error('Error fetching files:', error);
     }
@@ -169,9 +172,9 @@ export default function FileManager() {
           </div> */}
           <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
             {files.map((item, index) => (
-              <div key={index}>
-                <p>Nombre: {item.name || "No name found"}</p>
-                <p>Tipo: {item.type || "No type found"}</p>
+              <div key={index} className="p-4 border rounded-lg">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{item.type ? `.${item.type}` : "No type"}</p>
               </div>
             ))}
           </div>
