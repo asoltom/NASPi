@@ -154,12 +154,14 @@ export default function FileManager() {
           <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Files and Folders</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
+          <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
             {files.map((item, index) => (
               <div
                 key={index}
-                className={`p-4 border rounded-lg ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden cursor-pointer`}
-                onClick={() => setSelectedFile(item.name)}
+                className={`p-4 border rounded-lg ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} 
+                          dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden cursor-pointer
+                          ${selectedFile === `${item.name}${item.type ? '.' + item.type : ''}` ? 'border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`}
+                onClick={() => setSelectedFile(`${item.name}${item.type ? '.' + item.type : ''}`)}
               >
                 {item.type === 'folder' ? (
                   <Folder className={`w-12 h-12 flex-shrink-0 ${viewMode === 'grid' ? 'mx-auto mb-2' : 'mr-4'} text-blue-500 dark:text-blue-400`} />
@@ -167,14 +169,7 @@ export default function FileManager() {
                   <File className={`w-12 h-12 flex-shrink-0 ${viewMode === 'grid' ? 'mx-auto mb-2' : 'mr-4'} text-gray-500 dark:text-gray-400`} />
                 )}
                 <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
-              </div>
-            ))}
-          </div> */}
-          <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
-            {files.map((item, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{item.type ? `.${item.type}` : "No type"}</p>
+                <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.type ? `.${item.type}` : "No type"}</span>
               </div>
             ))}
           </div>
