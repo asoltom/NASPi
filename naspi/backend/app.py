@@ -10,7 +10,11 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])  # Habilitar CORS en toda la app
 
 # Ruta donde están montados los SSD (puedes ajustar esto según tu configuración)
-RAID_PATH = "/mnt/raid"
+RAID_PATH = "/mnt/raid/files"
+
+# Crear el directorio si no existe
+if not os.path.exists(RAID_PATH):
+    os.makedirs(RAID_PATH)
 
 # Ruta al archivo de usuarios
 USERS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'users.json')
@@ -58,13 +62,8 @@ def list_files():
         if not os.path.exists(RAID_PATH) or not os.path.isdir(RAID_PATH):
             return jsonify({"error": "Directorio RAID_PATH no encontrado o sin acceso"}), 500
 
-        # Filtrar archivos: excluir "lost+found" y cualquier directorio
-        files = []
-        for f in os.listdir(RAID_PATH):
-            full_path = os.path.join(RAID_PATH, f)
-            if f == "lost+found" or os.path.isdir(full_path):
-                continue
-            files.append(f)
+        # Obtener todos los archivos en el directorio
+        files = [f for f in os.listdir(RAID_PATH) if not os.path.isdir(os.path.join(RAID_PATH, f))]
 
         return jsonify(files)
     
