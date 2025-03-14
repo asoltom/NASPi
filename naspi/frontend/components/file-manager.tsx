@@ -86,13 +86,17 @@ export default function FileManager() {
     try {
       const response = await fetch(`http://naspi.local:5000/api/files/${selectedFile}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
         alert('File deleted successfully!');
         fetchFiles();
       } else {
-        console.error('Error deleting file:', await response.text());
+        const errorText = await response.text();
+        console.error('Error deleting file:', errorText);
       }
     } catch (error) {
       console.error('Error deleting file:', error);

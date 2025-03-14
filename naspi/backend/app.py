@@ -7,13 +7,25 @@ import uuid
 import Info_checker as info
 
 app = Flask(__name__)
-CORS(app)  # Habilitar CORS en toda la app
+CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])  # Habilitar CORS en toda la app
 
 # Ruta donde están montados los SSD (puedes ajustar esto según tu configuración)
 RAID_PATH = "/mnt/raid"
 
 # Ruta al archivo de usuarios
 USERS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'users.json')
+
+# Verificar y establecer permisos para users.json
+if not os.path.exists(USERS_FILE):
+    os.makedirs(os.path.dirname(USERS_FILE), exist_ok=True)
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump([], f, indent=2)
+
+# Asegurar permisos adecuados
+try:
+    os.chmod(USERS_FILE, 0o666)
+except Exception as e:
+    print(f"Advertencia: No se pudo cambiar permisos de {USERS_FILE}: {e}")
 
 # Extensiones permitidas
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
@@ -133,31 +145,26 @@ def users():
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para descargar un archivo
 # GET:method --> /api/files/<filename> --> file
-#------------------------------------------------------------------------------------------------------------------
-@app.route('/api/files/<filename>', methods=['GET'])
-def download_file(filename):
-    try:
-        return send_from_directory(RAID_PATH, filename, as_attachment=True)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-#------------------------------------------------------------------------------------------------------------------
-# Ruta para eliminar un archivo
 # DELETE:method --> /api/files/<filename> --> Eliminar archivo
 #------------------------------------------------------------------------------------------------------------------
-@app.route('/api/files/<filename>', methods=['DELETE'])
-def delete_file(filename):
-    file_path = os.path.join(RAID_PATH, filename)
-
-    if os.path.exists(file_path):
+@app.route('/api/files/<filename>', methods=['GET', 'DELETE'])
+def file_operations(filename):
+    if request.method == 'GET':
         try:
-            os.remove(file_path)
-            return jsonify({"message": "Archivo eliminado con éxito"}), 200
+            return send_from_directory(RAID_PATH, filename, as_attachment=True)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    else:
-        return jsonify({"error": "Archivo no encontrado"}), 404
 
+    elif request.method == 'DELETE':
+        file_path = os.path.join(RAID_PATH, filename)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                return jsonify({"message": "Archivo eliminado con éxito"}), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        else:
+            return jsonify({"error": "Archivo no encontrado"}), 404
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para subir un archivo
 # POST:method, file --> /api/files
