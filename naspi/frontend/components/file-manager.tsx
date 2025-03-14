@@ -14,8 +14,6 @@ export default function FileManager() {
     try {
       const response = await fetch('http://naspi.local:5000/api/files');
       const data = await response.json();
-      console.log("Data: ")
-      console.log(data)
 
       // Transformamos la lista de strings en objetos con name y type
       const files = data.map((item: string) => {
@@ -24,7 +22,6 @@ export default function FileManager() {
           type: item.includes('.') ? item.split('.').pop() : "" // Si no tiene extensión, guardar vacío
         };
       });
-      console.log("Files processed:", files);
       setFiles(files); // Guardamos el nuevo array en el estado
 
     } catch (error) {

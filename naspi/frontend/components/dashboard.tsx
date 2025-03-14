@@ -58,14 +58,6 @@ export default function Dashboard({ user }: DashboardProps) {
         diskUsed: parseFloat(diskUsedGB),
       });
 
-      console.log({
-        CPU: cpuUsage,
-        TempCPU: tempCPU,
-        RAM: ramUsage,
-        diskTotal: diskTotalGB,
-        diskUsed: diskUsedGB,
-      });
-
     } catch (error) {
       console.error("Error fetching hardware info:", error);
     }
