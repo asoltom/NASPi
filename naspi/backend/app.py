@@ -54,8 +54,20 @@ if not os.path.ismount(RAID_PATH):
 @app.route('/api/files', methods=['GET'])
 def list_files():
     try:
-        files = [f for f in os.listdir(RAID_PATH) if f != "lost+found"]
+        # Verifica que el directorio existe y tiene permisos de lectura
+        if not os.path.exists(RAID_PATH) or not os.path.isdir(RAID_PATH):
+            return jsonify({"error": "Directorio RAID_PATH no encontrado o sin acceso"}), 500
+
+        # Filtrar archivos: excluir "lost+found" y cualquier directorio
+        files = []
+        for f in os.listdir(RAID_PATH):
+            full_path = os.path.join(RAID_PATH, f)
+            if f == "lost+found" or os.path.isdir(full_path):
+                continue
+            files.append(f)
+
         return jsonify(files)
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------

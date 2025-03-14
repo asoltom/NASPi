@@ -7,7 +7,7 @@ import { Folder, File, Grid, List, Upload, Download, Trash, Search } from 'lucid
 // Componente para mostrar notificaciones emergentes
 const Notification = ({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) => {
   return (
-    <div className={`fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white text-sm 
+    <div className={`fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm 
       ${type === "success" ? "bg-green-500" : "bg-red-500"}`}>
       {message}
     </div>
