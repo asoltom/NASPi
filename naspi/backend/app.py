@@ -58,15 +58,30 @@ if not os.path.ismount(RAID_PATH):
 @app.route('/api/files', methods=['GET'])
 def list_files():
     try:
-        # Verifica que el directorio existe y tiene permisos de lectura
-        if not os.path.exists(RAID_PATH) or not os.path.isdir(RAID_PATH):
-            return jsonify({"error": "Directorio RAID_PATH no encontrado o sin acceso"}), 500
+        # Obtener la ruta actual desde el frontend
+        current_path = request.args.get('path', '').strip('/')
+        directory = os.path.join(RAID_PATH, current_path)  # Ruta completa
 
-        # Obtener todos los archivos en el directorio
-        files = [f for f in os.listdir(RAID_PATH) if not os.path.isdir(os.path.join(RAID_PATH, f))]
+        # Verificar que el directorio existe
+        if not os.path.exists(directory) or not os.path.isdir(directory):
+            return jsonify({"error": "Directorio no encontrado"}), 404
 
-        return jsonify(files)
-    
+        # Obtener archivos y carpetas
+        files = []
+        folders = []
+        for f in os.listdir(directory):
+            full_path = os.path.join(directory, f)
+            if os.path.isdir(full_path):
+                folders.append(f)  # Guardar solo el nombre
+            else:
+                files.append(f)
+
+        return jsonify({
+            "files": files,
+            "folders": folders,
+            "path": current_path  # Mantener la ruta actual
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
