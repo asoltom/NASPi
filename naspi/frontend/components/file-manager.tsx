@@ -2,69 +2,81 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Folder, File, Grid, List, Upload, Download, Trash, Search, ArrowLeft } from 'lucide-react';
+import { Folder, File, Grid, List, Upload, Download, Trash } from 'lucide-react';
 
-const Notification = ({ message, type }: { message: string; type: "success" | "error" }) => {
-  return (
-    <div className={`fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm 
-      ${type === "success" ? "bg-green-500" : "bg-red-500"}`}>
-      {message}
-    </div>
-  );
-};
+// Definir interfaces para tipado correcto
+interface NotificationProps {
+  message: string;
+  type: "success" | "error";
+}
+
+interface FileItem {
+  name: string;
+  isFolder: boolean;
+}
+
+const Notification: React.FC<NotificationProps> = ({ message, type }) => (
+  <div className={`fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm 
+    ${type === "success" ? "bg-green-500" : "bg-red-500"}`}>
+    {message}
+  </div>
+);
 
 export default function FileManager() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [files, setFiles] = useState<{ name: string; type: string; isFolder: boolean }[]>([]);
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [notification, setNotification] = useState<NotificationProps | null>(null);
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const fetchFiles = async (path = '') => {
+  const fetchFiles = async (path: string = '') => {
     try {
       const response = await fetch(`http://naspi.local:5000/api/files?path=${path}`);
-      const data = await response.json();
-      setFiles(data.files.map((file: string) => ({ name: file, type: '', isFolder: false })));
+      const data: { folders: string[]; files: string[] } = await response.json();
+
+      setFiles([
+        ...data.folders.map((folder) => ({ name: folder, isFolder: true })),
+        ...data.files.map((file) => ({ name: file, isFolder: false })),
+      ]);
       setCurrentPath(path);
     } catch (error) {
-      console.error('Error fetching files:', error);
+      showNotification('Error cargando archivos', 'error');
     }
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
-    if (!fileList) return;
+    if (!fileList || fileList.length === 0) return;
 
     const formData = new FormData();
-    Array.from(fileList).forEach(file => formData.append('files', file));
+    Array.from(fileList).forEach((file) => formData.append('file', file));
 
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files?path=${currentPath}`, {
+      const response = await fetch(`http://naspi.local:5000/api/files`, {
         method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
       if (response.ok) {
-        showNotification('Files uploaded successfully!', 'success');
+        showNotification('Archivo subido correctamente', 'success');
         fetchFiles(currentPath);
       } else {
-        showNotification(result.error || 'Error uploading files', 'error');
+        showNotification(result.error || 'Error al subir archivo', 'error');
       }
     } catch (error) {
-      showNotification('Error uploading files', 'error');
+      showNotification('Error al subir archivo', 'error');
     }
   };
 
   const handleDownload = async (fileName: string) => {
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files/download?path=${currentPath}/${fileName}`);
-      if (!response.ok) throw new Error('Error downloading file');
+      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`);
+      if (!response.ok) throw new Error('Error al descargar archivo');
 
       const blob = await response.blob();
       const link = document.createElement('a');
@@ -74,25 +86,25 @@ export default function FileManager() {
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      showNotification('Error downloading file', 'error');
+      showNotification('Error al descargar archivo', 'error');
     }
   };
 
   const handleDelete = async (fileName: string) => {
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files?path=${currentPath}/${fileName}`, {
+      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`, {
         method: 'DELETE',
       });
       const result = await response.json();
 
       if (response.ok) {
-        showNotification('File deleted successfully!', 'success');
+        showNotification('Archivo eliminado correctamente', 'success');
         fetchFiles(currentPath);
       } else {
-        showNotification(result.error || 'Error deleting file', 'error');
+        showNotification(result.error || 'Error al eliminar archivo', 'error');
       }
     } catch (error) {
-      showNotification('Error deleting file', 'error');
+      showNotification('Error al eliminar archivo', 'error');
     }
   };
 
@@ -116,18 +128,22 @@ export default function FileManager() {
         </div>
       </div>
 
+      {/* Input para subir archivos */}
+      <div className="flex items-center space-x-4">
+        <Input type="file" multiple onChange={handleFileChange} className="hidden" id="fileUpload" />
+        <label htmlFor="fileUpload" className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600">
+          <Upload className="w-5 h-5 mr-2" /> Subir archivos
+        </label>
+      </div>
+
       <Card className="bg-white dark:bg-gray-800">
         <CardHeader>
-          <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Files and Folders</CardTitle>
+          <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Archivos y Carpetas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
             {files.map((item, index) => (
-              <div
-                key={index}
-                className={`p-4 border rounded-lg cursor-pointer ${viewMode === 'grid' ? 'text-center' : 'flex items-center'}
-                          dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}
-              >
+              <div key={index} className={`p-4 border rounded-lg cursor-pointer ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}>
                 {item.isFolder ? (
                   <Folder className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
                 ) : (
