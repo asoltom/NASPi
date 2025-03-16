@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Folder, File, Grid, List, Upload, Download, Trash, Search, ArrowLeft } from 'lucide-react';
 
-// Componente para mostrar notificaciones emergentes
 const Notification = ({ message, type }: { message: string; type: "success" | "error" }) => {
   return (
     <div className={`fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm 
@@ -30,42 +29,19 @@ export default function FileManager() {
     try {
       const response = await fetch(`http://naspi.local:5000/api/files?path=${path}`);
       const data = await response.json();
-
-      if (!data || typeof data !== "object") {
-        console.error("Error: Respuesta inesperada de la API", data);
-        setFiles([]);
-        return;
-      }
-
-      const filesArray = [
-        ...data.folders.map((folder: string) => ({
-          name: folder,
-          type: "",
-          isFolder: true,
-        })),
-        ...data.files.map((file: string) => ({
-          name: file,
-          type: file.split('.').pop() || "",
-          isFolder: false,
-        })),
-      ];
-
-      setFiles(filesArray);
-      setCurrentPath(data.path);
+      setFiles(data.files.map((file: string) => ({ name: file, type: '', isFolder: false })));
+      setCurrentPath(path);
     } catch (error) {
       console.error('Error fetching files:', error);
-      setFiles([]);
     }
   };
-
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
     if (!fileList) return;
 
-    const filesArray = Array.from(fileList);
     const formData = new FormData();
-    filesArray.forEach(file => formData.append('files', file));
+    Array.from(fileList).forEach(file => formData.append('files', file));
 
     try {
       const response = await fetch(`http://naspi.local:5000/api/files?path=${currentPath}`, {
@@ -73,14 +49,50 @@ export default function FileManager() {
         body: formData,
       });
 
+      const result = await response.json();
       if (response.ok) {
         showNotification('Files uploaded successfully!', 'success');
         fetchFiles(currentPath);
       } else {
-        showNotification('Error uploading files', 'error');
+        showNotification(result.error || 'Error uploading files', 'error');
       }
     } catch (error) {
       showNotification('Error uploading files', 'error');
+    }
+  };
+
+  const handleDownload = async (fileName: string) => {
+    try {
+      const response = await fetch(`http://naspi.local:5000/api/files/download?path=${currentPath}/${fileName}`);
+      if (!response.ok) throw new Error('Error downloading file');
+
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      showNotification('Error downloading file', 'error');
+    }
+  };
+
+  const handleDelete = async (fileName: string) => {
+    try {
+      const response = await fetch(`http://naspi.local:5000/api/files?path=${currentPath}/${fileName}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        showNotification('File deleted successfully!', 'success');
+        fetchFiles(currentPath);
+      } else {
+        showNotification(result.error || 'Error deleting file', 'error');
+      }
+    } catch (error) {
+      showNotification('Error deleting file', 'error');
     }
   };
 
@@ -104,30 +116,6 @@ export default function FileManager() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-        <div className="flex w-full md:w-64">
-          <Input placeholder="Search files..." className="w-full rounded-r-none" />
-          <Button className="rounded-l-none" variant="secondary">
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
-          <input type="file" id="file-input" className="hidden" multiple {...({ webkitdirectory: true } as any)} onChange={handleFileChange} />
-          <Button onClick={() => document.getElementById('file-input')?.click()}>
-            <Upload className="w-4 h-4 mr-2" />
-            Upload Folder
-          </Button>
-        </div>
-      </div>
-
-      {currentPath && (
-        <Button variant="outline" onClick={() => fetchFiles(currentPath.split('/').slice(0, -1).join('/'))}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-      )}
-
       <Card className="bg-white dark:bg-gray-800">
         <CardHeader>
           <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Files and Folders</CardTitle>
@@ -139,7 +127,6 @@ export default function FileManager() {
                 key={index}
                 className={`p-4 border rounded-lg cursor-pointer ${viewMode === 'grid' ? 'text-center' : 'flex items-center'}
                           dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}
-                onClick={() => item.isFolder ? fetchFiles(`${currentPath}/${item.name}`) : setSelectedFile(`${item.name}.${item.type}`)}
               >
                 {item.isFolder ? (
                   <Folder className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
@@ -147,6 +134,16 @@ export default function FileManager() {
                   <File className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
                 )}
                 <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
+                {!item.isFolder && (
+                  <div className="flex space-x-2 mt-2">
+                    <Button variant="ghost" onClick={() => handleDownload(item.name)}>
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" onClick={() => handleDelete(item.name)}>
+                      <Trash className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
