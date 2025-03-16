@@ -1,87 +1,68 @@
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS  # Importar CORS
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 import json
 import uuid
+import bcrypt
 import Info_checker as info
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])  # Habilitar CORS en toda la app
+CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])
 
-# Ruta donde están montados los SSD (puedes ajustar esto según tu configuración)
+# Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
 
-# Crear el directorio si no existe
 if not os.path.exists(RAID_PATH):
     os.makedirs(RAID_PATH)
 
-# Ruta al archivo de usuarios
+# Configuración del archivo de usuarios
 USERS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'users.json')
 
-# Verificar y establecer permisos para users.json
 if not os.path.exists(USERS_FILE):
     os.makedirs(os.path.dirname(USERS_FILE), exist_ok=True)
     with open(USERS_FILE, 'w', encoding='utf-8') as f:
         json.dump([], f, indent=2)
 
-# Asegurar permisos adecuados
-try:
-    os.chmod(USERS_FILE, 0o666)
-except Exception as e:
-    print(f"Advertencia: No se pudo cambiar permisos de {USERS_FILE}: {e}")
-
-# Extensiones permitidas (archivos comunes de oficina añadidos)
 ALLOWED_EXTENSIONS = {
-    # Texto, imágenes y documentos
-    'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif',
-    'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-    
-    # Archivos comprimidos
-    'zip', 'rar', '7z', 'tar', 'gz', 'tar.gz',
-    
-    # Videos
-    'mp4', 'avi', 'mkv', 'mov', 'wmv'
+    'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 
+    'ppt', 'pptx', 'zip', 'rar', '7z', 'tar', 'gz', 'tar.gz', 'mp4', 'avi', 'mkv', 'mov', 'wmv'
 }
 
-# Aumentar el tamaño máximo a 5GB
 MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024  # 5GB
 
-# Crear la carpeta RAID si no existe (útil para pruebas locales)
-if not os.path.ismount(RAID_PATH):
-    raise RuntimeError(f"El RAID no está montado en {RAID_PATH}. Asegúrate de configurarlo en OMV antes de ejecutar la aplicación.")
+# Utilidades de usuario
+def read_users():
+    with open(USERS_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
+def save_users(users):
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, indent=2)
+
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def check_password(password, hashed):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para listar archivos
 # GET:method --> /api/files --> files
 #------------------------------------------------------------------------------------------------------------------
+# Rutas API
 @app.route('/api/files', methods=['GET'])
 def list_files():
     try:
-        # Obtener la ruta actual desde el frontend
         current_path = request.args.get('path', '').strip('/')
-        directory = os.path.join(RAID_PATH, current_path)  # Ruta completa
+        directory = os.path.join(RAID_PATH, current_path)
 
-        # Verificar que el directorio existe
         if not os.path.exists(directory) or not os.path.isdir(directory):
             return jsonify({"error": "Directorio no encontrado"}), 404
 
-        # Obtener archivos y carpetas
-        files = []
-        folders = []
-        for f in os.listdir(directory):
-            full_path = os.path.join(directory, f)
-            if os.path.isdir(full_path):
-                folders.append(f)  # Guardar solo el nombre
-            else:
-                files.append(f)
+        files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+        folders = [f for f in os.listdir(directory) if os.path.isdir(os.path.join(directory, f))]
 
-        return jsonify({
-            "files": files,
-            "folders": folders,
-            "path": current_path  # Mantener la ruta actual
-        })
-
+        return jsonify({"files": files, "folders": folders, "path": current_path})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
@@ -91,64 +72,42 @@ def list_files():
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
-        # Obtener datos del request
         data = request.get_json()
         username = data.get("username")
         password = data.get("password")
 
-        # Leer usuarios desde users.json
-        with open(USERS_FILE, 'r', encoding='utf-8') as f:
-            users = json.load(f)
+        users = read_users()
+        user = next((u for u in users if u["username"] == username), None)
 
-        # Buscar usuario
-        user = next((u for u in users if u["username"] == username and u["password"] == password), None)
-
-        if user:
-            # En una app real, aquí se generaría un token JWT
+        if user and check_password(password, user["password"]):
             return jsonify({"message": "Login successful", "user": {"id": user["id"], "username": user["username"], "role": user["role"]}})
         else:
             return jsonify({"message": "Invalid credentials"}), 401
-
     except Exception as e:
-        return jsonify({"message": "Error processing request", "error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para gestionar users
 # GET:method, users.json --> /api/users --> user
 # DELETE:method, user --> /api/users --> users.json
 # POST:method, user --> /api/users --> users.json
 #------------------------------------------------------------------------------------------------------------------
-# Función para leer usuarios
-def read_users():
-    if not os.path.exists(USERS_FILE):
-        return []
-    with open(USERS_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
-
-# Función para guardar usuarios
-def save_users(users):
-    with open(USERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(users, f, indent=2)
-
 @app.route('/api/users', methods=['GET', 'POST', 'DELETE'])
 def users():
     try:
         if request.method == 'POST':
             data = request.get_json()
             username = data.get("username")
-            password = data.get("password")  # ⚠️ En una app real, esto debe estar hasheado
+            password = data.get("password")
             role = data.get("role", "user")
 
             users = read_users()
-
-            # Verificar si el usuario ya existe
             if any(user["username"] == username for user in users):
                 return jsonify({"message": "Username already exists"}), 400
 
-            # Crear nuevo usuario
             new_user = {
                 "id": str(uuid.uuid4()),
                 "username": username,
-                "password": password,  # ⚠️ Sin hash por ahora
+                "password": hash_password(password),
                 "role": role
             }
 
@@ -164,7 +123,6 @@ def users():
 
         elif request.method == 'DELETE':
             user_id = request.args.get("id")
-
             if not user_id:
                 return jsonify({"message": "Valid user ID is required"}), 400
 
@@ -175,11 +133,9 @@ def users():
                 return jsonify({"message": "User not found"}), 404
 
             save_users(updated_users)
-
             return jsonify({"message": "User deleted successfully"}), 200
-
     except Exception as e:
-        return jsonify({"message": "Error processing request", "error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para descargar un archivo
 # GET:method --> /api/files/<filename> --> file
@@ -187,6 +143,8 @@ def users():
 #------------------------------------------------------------------------------------------------------------------
 @app.route('/api/files/<filename>', methods=['GET', 'DELETE'])
 def file_operations(filename):
+    file_path = os.path.join(RAID_PATH, secure_filename(filename))
+
     if request.method == 'GET':
         try:
             return send_from_directory(RAID_PATH, filename, as_attachment=True)
@@ -194,7 +152,6 @@ def file_operations(filename):
             return jsonify({"error": str(e)}), 500
 
     elif request.method == 'DELETE':
-        file_path = os.path.join(RAID_PATH, filename)
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
@@ -225,13 +182,11 @@ def upload_file():
 
     if len(file.read()) > MAX_FILE_SIZE:
         return jsonify({"error": "El archivo es demasiado grande"}), 400
-    file.seek(0)  # Resetear el puntero del archivo después de leerlo
+    file.seek(0)
 
-    # Guardar con un nombre seguro para evitar problemas
     filename = secure_filename(file.filename)
     file_path = os.path.join(RAID_PATH, filename)
 
-    # Evitar sobreescritura: si ya existe, añadir un sufijo
     counter = 1
     base, ext = os.path.splitext(filename)
     while os.path.exists(file_path):
@@ -244,7 +199,6 @@ def upload_file():
         return jsonify({"message": "Archivo subido con éxito", "filename": filename}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para recoger datos de telematica
 # GET:method --> /api/telematic --> [ip,gateway,mask]]
@@ -252,7 +206,6 @@ def upload_file():
 @app.route('/api/telematic', methods=['GET'])
 def get_telematic():
     try:
-        # Recoger datos
         data = info.get_telematic_info()
         return jsonify(data)
     except Exception as e:
@@ -264,12 +217,10 @@ def get_telematic():
 @app.route('/api/hardware', methods=['GET'])
 def get_hardware():
     try:
-        # Recoger datos
         data = info.get_hardware_info()
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
 #------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
