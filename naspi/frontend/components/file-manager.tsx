@@ -30,13 +30,34 @@ export default function FileManager() {
     try {
       const response = await fetch(`http://naspi.local:5000/api/files?path=${path}`);
       const data = await response.json();
-      
-      setFiles(data);
-      setCurrentPath(path);
+
+      if (!data || typeof data !== "object") {
+        console.error("Error: Respuesta inesperada de la API", data);
+        setFiles([]);
+        return;
+      }
+
+      const filesArray = [
+        ...data.folders.map((folder: string) => ({
+          name: folder,
+          type: "",
+          isFolder: true,
+        })),
+        ...data.files.map((file: string) => ({
+          name: file,
+          type: file.split('.').pop() || "",
+          isFolder: false,
+        })),
+      ];
+
+      setFiles(filesArray);
+      setCurrentPath(data.path);
     } catch (error) {
       console.error('Error fetching files:', error);
+      setFiles([]);
     }
   };
+
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
