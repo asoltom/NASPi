@@ -48,6 +48,41 @@ export default function FileManager() {
     }
   };
 
+  const handleDownload = async (fileName: string) => {
+    try {
+      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`);
+      if (!response.ok) throw new Error('Error al descargar archivo');
+
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      showNotification('Error al descargar archivo', 'error');
+    }
+  };
+
+  const handleDelete = async (fileName: string) => {
+    try {
+      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        showNotification('Archivo eliminado correctamente', 'success');
+        fetchFiles(currentPath);
+      } else {
+        showNotification(result.error || 'Error al eliminar archivo', 'error');
+      }
+    } catch (error) {
+      showNotification('Error al eliminar archivo', 'error');
+    }
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
     if (!fileList || fileList.length === 0) return;
@@ -132,6 +167,16 @@ export default function FileManager() {
                   <File className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
                 )}
                 <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
+                {!item.isFolder && (
+                  <div className="flex space-x-2 mt-2">
+                    <Button variant="ghost" onClick={() => handleDownload(item.name)}>
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" onClick={() => handleDelete(item.name)}>
+                      <Trash className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
