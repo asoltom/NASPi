@@ -8,7 +8,7 @@ import bcrypt
 import Info_checker as info
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])
+CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type"])
 
 # Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
@@ -149,12 +149,11 @@ def users():
 # GET:method --> /api/files/<filename> --> file
 # DELETE:method --> /api/files/<filename> --> Eliminar archivo
 #------------------------------------------------------------------------------------------------------------------
-@app.route('/api/files/<path:filename>', methods=['GET', 'DELETE'])
-def file_operations(filename):
-    # Asegurar que el filename recibido no intente salir del directorio RAID_PATH
-    safe_path = os.path.normpath(os.path.join(RAID_PATH, filename))
+@app.route('/api/files/<path:filepath>', methods=['GET', 'DELETE', 'OPTIONS'])
+def file_operations(filepath):
+    safe_path = os.path.normpath(os.path.join(RAID_PATH, filepath))
 
-    # Evitar accesos fuera del RAID_PATH (ataques de path traversal)
+    # Evitar acceso fuera del RAID_PATH (prevención de path traversal)
     if not safe_path.startswith(RAID_PATH):
         return jsonify({"error": "Acceso denegado"}), 403
 
@@ -175,6 +174,9 @@ def file_operations(filename):
                 return jsonify({"error": str(e)}), 500
         else:
             return jsonify({"error": "Archivo no encontrado"}), 404
+
+    elif request.method == 'OPTIONS':
+        return jsonify({"message": "Preflight OK"}), 200
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para subir un archivo
 # POST:method, file --> /api/files

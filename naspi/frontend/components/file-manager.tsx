@@ -67,20 +67,21 @@ export default function FileManager() {
 
   const handleDelete = async (fileName: string) => {
     try {
-      const fullPath = encodeURIComponent(`${currentPath}/${fileName}`); // Ruta completa
+      const fullPath = encodeURIComponent(`${currentPath}/${fileName}`);
       const response = await fetch(`http://naspi.local:5000/api/files/${fullPath}`, {
         method: 'DELETE',
+        headers: {
+          "Content-Type": "application/json"
+        }
       });
-      const result = await response.json();
-  
+      const data = await response.json();
       if (response.ok) {
-        showNotification('Archivo eliminado correctamente', 'success');
-        fetchFiles(currentPath);
+        console.log("Archivo eliminado:", data.message);
       } else {
-        showNotification(result.error || 'Error al eliminar archivo', 'error');
+        console.error("Error al eliminar:", data.error);
       }
     } catch (error) {
-      showNotification('Error al eliminar archivo', 'error');
+      console.error("Error en DELETE:", error);
     }
   };
 
