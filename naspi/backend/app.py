@@ -10,6 +10,9 @@ import Info_checker as info
 app = Flask(__name__)
 CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])
 
+UPLOAD_FOLDER = "uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 # Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
 
@@ -79,8 +82,16 @@ def login():
         users = read_users()
         user = next((u for u in users if u["username"] == username), None)
 
-        if user and check_password(password, user["password"]):
-            return jsonify({"message": "Login successful", "user": {"id": user["id"], "username": user["username"], "role": user["role"]}})
+        # Comparar contraseñas sin hash
+        if user and user["password"] == password:
+            return jsonify({
+                "message": "Login successful",
+                "user": {
+                    "id": user["id"],
+                    "username": user["username"],
+                    "role": user["role"]
+                }
+            })
         else:
             return jsonify({"message": "Invalid credentials"}), 401
     except Exception as e:
@@ -167,36 +178,59 @@ def file_operations(filename):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/api/files', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({"error": "No se ha enviado ningún archivo"}), 400
-
-    file = request.files['file']
-    
-    if file.filename == '':
-        return jsonify({"error": "No se ha seleccionado ningún archivo"}), 400
-
-    if not allowed_file(file.filename):
-        return jsonify({"error": "Tipo de archivo no permitido"}), 400
-
-    if len(file.read()) > MAX_FILE_SIZE:
-        return jsonify({"error": "El archivo es demasiado grande"}), 400
-    file.seek(0)
-
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(RAID_PATH, filename)
-
-    counter = 1
-    base, ext = os.path.splitext(filename)
-    while os.path.exists(file_path):
-        filename = f"{base}_{counter}{ext}"
-        file_path = os.path.join(RAID_PATH, filename)
-        counter += 1
-
+@app.route('/api/upload', methods=['POST'])
+def upload():
     try:
-        file.save(file_path)
-        return jsonify({"message": "Archivo subido con éxito", "filename": filename}), 200
+        if 'files' not in request.files:
+            return jsonify({"message": "No file part"}), 400
+
+        files = request.files.getlist('files')  # Obtener lista de archivos
+        uploaded_files = []
+
+        for file in files:
+            if file.filename == '':
+                continue
+            filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+            file.save(filepath)
+            uploaded_files.append(file.filename)
+
+        return jsonify({"message": "Files uploaded successfully", "files": uploaded_files})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/create_folder', methods=['POST'])
+def create_folder():
+    try:
+        data = request.get_json()
+        folder_name = data.get("folder_name")
+
+        if not folder_name or folder_name.lower() == "lost+found":
+            return jsonify({"error": "Invalid folder name"}), 400
+
+        folder_path = os.path.join(UPLOAD_FOLDER, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
+
+        return jsonify({"message": "Folder created successfully", "folder": folder_name})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/delete_folder', methods=['POST'])
+def delete_folder():
+    try:
+        data = request.get_json()
+        folder_name = data.get("folder_name")
+        folder_path = os.path.join(UPLOAD_FOLDER, folder_name)
+
+        if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+            return jsonify({"error": "Folder not found"}), 404
+        if folder_name.lower() == "lost+found":
+            return jsonify({"error": "Cannot delete this folder"}), 400
+
+        os.rmdir(folder_path)  # Solo si está vacía
+        return jsonify({"message": "Folder deleted successfully"})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------

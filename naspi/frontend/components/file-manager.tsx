@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Folder, File, Grid, List, Upload, Download, Trash } from 'lucide-react';
+import { Folder, File, Grid, List, Upload, Download, Trash, PlusCircle } from 'lucide-react';
 
 // Definir interfaces para tipado correcto
 interface NotificationProps {
@@ -53,59 +53,39 @@ export default function FileManager() {
     if (!fileList || fileList.length === 0) return;
 
     const formData = new FormData();
-    Array.from(fileList).forEach((file) => formData.append('file', file));
+    Array.from(fileList).forEach((file) => formData.append('files', file));
 
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files`, {
+      const response = await fetch(`http://naspi.local:5000/api/upload`, {
         method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
       if (response.ok) {
-        showNotification('Archivo subido correctamente', 'success');
+        showNotification('Archivos subidos correctamente', 'success');
         fetchFiles(currentPath);
       } else {
-        showNotification(result.error || 'Error al subir archivo', 'error');
+        showNotification(result.error || 'Error al subir archivos', 'error');
       }
     } catch (error) {
-      showNotification('Error al subir archivo', 'error');
+      showNotification('Error al subir archivos', 'error');
     }
   };
 
-  const handleDownload = async (fileName: string) => {
-    try {
-      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`);
-      if (!response.ok) throw new Error('Error al descargar archivo');
+  const createFolder = async () => {
+    const folderName = prompt("Ingrese el nombre de la carpeta:");
+    if (!folderName) return;
 
-      const blob = await response.blob();
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      showNotification('Error al descargar archivo', 'error');
-    }
-  };
+    const response = await fetch('http://naspi.local:5000/api/create_folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder_name: folderName }),
+    });
 
-  const handleDelete = async (fileName: string) => {
-    try {
-      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`, {
-        method: 'DELETE',
-      });
-      const result = await response.json();
-
-      if (response.ok) {
-        showNotification('Archivo eliminado correctamente', 'success');
-        fetchFiles(currentPath);
-      } else {
-        showNotification(result.error || 'Error al eliminar archivo', 'error');
-      }
-    } catch (error) {
-      showNotification('Error al eliminar archivo', 'error');
-    }
+    const data = await response.json();
+    showNotification(data.message, response.ok ? 'success' : 'error');
+    fetchFiles(currentPath);
   };
 
   useEffect(() => {
@@ -125,10 +105,12 @@ export default function FileManager() {
           <Button variant="outline" onClick={() => setViewMode('list')}>
             <List className="w-4 h-4" />
           </Button>
+          <Button variant="outline" onClick={createFolder}>
+            <PlusCircle className="w-4 h-4" /> Crear Carpeta
+          </Button>
         </div>
       </div>
 
-      {/* Input para subir archivos */}
       <div className="flex items-center space-x-4">
         <Input type="file" multiple onChange={handleFileChange} className="hidden" id="fileUpload" />
         <label htmlFor="fileUpload" className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600">
@@ -150,16 +132,6 @@ export default function FileManager() {
                   <File className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
                 )}
                 <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
-                {!item.isFolder && (
-                  <div className="flex space-x-2 mt-2">
-                    <Button variant="ghost" onClick={() => handleDownload(item.name)}>
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" onClick={() => handleDelete(item.name)}>
-                      <Trash className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </div>
-                )}
               </div>
             ))}
           </div>
