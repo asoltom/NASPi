@@ -10,13 +10,6 @@ import Info_checker as info
 app = Flask(__name__)
 CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])
 
-UPLOAD_FOLDER = "uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-# Crear la carpeta de uploads si no existe
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
 # Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
 
@@ -194,7 +187,7 @@ def upload():
         for file in files:
             if file.filename == '':
                 continue
-            filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+            filepath = os.path.join(RAID_PATH, file.filename)
             file.save(filepath)
             uploaded_files.append(file.filename)
 
@@ -212,7 +205,7 @@ def create_folder():
         if not folder_name or folder_name.lower() == "lost+found":
             return jsonify({"error": "Invalid folder name"}), 400
 
-        folder_path = os.path.join(UPLOAD_FOLDER, folder_name)
+        folder_path = os.path.join(RAID_PATH, folder_name)
         os.makedirs(folder_path, exist_ok=True)
 
         return jsonify({"message": "Folder created successfully", "folder": folder_name})
@@ -225,7 +218,7 @@ def delete_folder():
     try:
         data = request.get_json()
         folder_name = data.get("folder_name")
-        folder_path = os.path.join(UPLOAD_FOLDER, folder_name)
+        folder_path = os.path.join(RAID_PATH, folder_name)
 
         if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
             return jsonify({"error": "Folder not found"}), 404
