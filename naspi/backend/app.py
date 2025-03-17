@@ -13,6 +13,10 @@ CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"])
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+# Crear la carpeta de uploads si no existe
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 # Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
 
