@@ -67,11 +67,12 @@ export default function FileManager() {
 
   const handleDelete = async (fileName: string) => {
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`, {
+      const fullPath = encodeURIComponent(`${currentPath}/${fileName}`); // Ruta completa
+      const response = await fetch(`http://naspi.local:5000/api/files/${fullPath}`, {
         method: 'DELETE',
       });
       const result = await response.json();
-
+  
       if (response.ok) {
         showNotification('Archivo eliminado correctamente', 'success');
         fetchFiles(currentPath);

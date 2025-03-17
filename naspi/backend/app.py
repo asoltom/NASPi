@@ -149,20 +149,27 @@ def users():
 # GET:method --> /api/files/<filename> --> file
 # DELETE:method --> /api/files/<filename> --> Eliminar archivo
 #------------------------------------------------------------------------------------------------------------------
-@app.route('/api/files/<filename>', methods=['GET', 'DELETE'])
+@app.route('/api/files/<path:filename>', methods=['GET', 'DELETE'])
 def file_operations(filename):
-    file_path = os.path.join(RAID_PATH, secure_filename(filename))
+    # Asegurar que el filename recibido no intente salir del directorio RAID_PATH
+    safe_path = os.path.normpath(os.path.join(RAID_PATH, filename))
+
+    # Evitar accesos fuera del RAID_PATH (ataques de path traversal)
+    if not safe_path.startswith(RAID_PATH):
+        return jsonify({"error": "Acceso denegado"}), 403
 
     if request.method == 'GET':
         try:
-            return send_from_directory(RAID_PATH, filename, as_attachment=True)
+            directory = os.path.dirname(safe_path)
+            filename = os.path.basename(safe_path)
+            return send_from_directory(directory, filename, as_attachment=True)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
     elif request.method == 'DELETE':
-        if os.path.exists(file_path):
+        if os.path.exists(safe_path) and os.path.isfile(safe_path):
             try:
-                os.remove(file_path)
+                os.remove(safe_path)
                 return jsonify({"message": "Archivo eliminado con éxito"}), 200
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
