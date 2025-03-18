@@ -182,12 +182,18 @@ def upload():
             return jsonify({"message": "No file part"}), 400
 
         files = request.files.getlist('files')  # Obtener lista de archivos
+        current_path = request.form.get('path', '')  # Obtener la ruta actual
+        upload_dir = os.path.join(RAID_PATH, current_path) if current_path else RAID_PATH
+
+        # Crear la carpeta si no existe
+        os.makedirs(upload_dir, exist_ok=True)
+
         uploaded_files = []
 
         for file in files:
             if file.filename == '':
                 continue
-            filepath = os.path.join(RAID_PATH, file.filename)
+            filepath = os.path.join(upload_dir, file.filename)
             file.save(filepath)
             uploaded_files.append(file.filename)
 
