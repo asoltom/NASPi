@@ -121,6 +121,8 @@ export default function FileManager() {
     const formData = new FormData();
     Array.from(fileList).forEach((file) => formData.append('files', file));
 
+    formData.append("path", currentPath); 
+
     setUploading(true);
     setUploadProgress(0);
 
@@ -148,9 +150,10 @@ export default function FileManager() {
       setUploading(false);
     };
 
-    xhr.open('POST', `http://naspi.local:5000/api/upload?path=${currentPath}`, true);
+    xhr.open('POST', `http://naspi.local:5000/api/upload`, true);
     xhr.send(formData);
-  };
+};
+
 
   const createFolder = async () => {
     const folderName = prompt("Ingrese el nombre de la carpeta:");
