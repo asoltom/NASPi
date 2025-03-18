@@ -58,7 +58,9 @@ export default function FileManager() {
     setCurrentPath((prevPath) => {
       const parts = prevPath.split("/");
       parts.pop();
-      return parts.join("/");
+      const newPath = parts.join("/");
+      fetchFiles(newPath);
+      return newPath;
     });
   };
 
@@ -106,27 +108,30 @@ export default function FileManager() {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
     if (!fileList || fileList.length === 0) return;
-
+  
     const formData = new FormData();
     Array.from(fileList).forEach((file) => formData.append('files', file));
-
+  
+    // Enviar la ruta actual como parámetro
+    formData.append('path', currentPath);
+  
     try {
       const response = await fetch(`http://naspi.local:5000/api/upload`, {
         method: 'POST',
         body: formData,
       });
-
+  
       const result = await response.json();
       if (response.ok) {
         showNotification('Archivos subidos correctamente', 'success');
-        fetchFiles(currentPath);
+        fetchFiles(currentPath); // Refrescar la vista correctamente
       } else {
         showNotification(result.error || 'Error al subir archivos', 'error');
       }
     } catch (error) {
       showNotification('Error al subir archivos', 'error');
     }
-  };
+  };  
 
   const createFolder = async () => {
     const folderName = prompt("Ingrese el nombre de la carpeta:");
