@@ -68,7 +68,9 @@ export default function FileManager() {
 
   const handleDownload = async (fileName: string) => {
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`);
+      const filePath = currentPath ? `${currentPath}/${fileName}` : fileName;
+      const response = await fetch(`http://naspi.local:5000/api/files/${filePath}`);
+
       if (!response.ok) throw new Error('Error al descargar archivo');
 
       const blob = await response.blob();
@@ -86,7 +88,9 @@ export default function FileManager() {
 
   const handleDelete = async (fileName: string) => {
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`, {
+      const filePath = currentPath ? `${currentPath}/${fileName}` : fileName;
+      const response = await fetch(`http://naspi.local:5000/api/files/${filePath}`, {
+
         method: 'DELETE',
         headers: {
           "Content-Type": "application/json"

@@ -155,7 +155,10 @@ def file_operations(filename):
 
     if request.method == 'GET':
         try:
-            return send_from_directory(RAID_PATH, filename, as_attachment=True)
+            dir_path = os.path.dirname(filename)  # Extraer la carpeta del archivo
+            file_name = os.path.basename(filename)  # Extraer solo el nombre del archivo
+            return send_from_directory(os.path.join(RAID_PATH, dir_path), file_name, as_attachment=True)
+
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
