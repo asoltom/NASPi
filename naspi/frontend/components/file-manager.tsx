@@ -49,9 +49,11 @@ export default function FileManager() {
   };
 
   const handleEnterFolder = (folderName: string) => {
-    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
-    setCurrentPath(newPath);
-    fetchFiles(newPath);
+    setCurrentPath((prevPath) => {
+      const newPath = prevPath ? `${prevPath}/${folderName}` : folderName;
+      fetchFiles(newPath);
+      return newPath;
+    });
   };
 
   const handleGoBack = () => {

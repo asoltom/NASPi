@@ -183,6 +183,7 @@ def upload():
 
         files = request.files.getlist('files')  # Obtener lista de archivos
         current_path = request.form.get('path', '')  # Obtener la ruta actual
+        print(f"Upload Path: {current_path}")  # Para debug
         upload_dir = os.path.join(RAID_PATH, current_path) if current_path else RAID_PATH
 
         # Crear la carpeta si no existe
