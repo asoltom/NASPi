@@ -27,6 +27,9 @@ export default function FileManager() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
   const [notification, setNotification] = useState<NotificationProps | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0); // Estado para la barra de progreso
+  const [uploading, setUploading] = useState<boolean>(false); // Estado para indicar que se está subiendo
+
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type });
@@ -116,25 +119,37 @@ export default function FileManager() {
     if (!fileList || fileList.length === 0) return;
 
     const formData = new FormData();
-    formData.append('path', currentPath);  // ✅ Enviar la ruta actual
     Array.from(fileList).forEach((file) => formData.append('files', file));
 
-    try {
-      const response = await fetch(`http://naspi.local:5000/api/upload`, {
-        method: 'POST',
-        body: formData,
-      });
+    setUploading(true);
+    setUploadProgress(0);
 
-      const result = await response.json();
-      if (response.ok) {
-        showNotification('Archivos subidos correctamente', 'success');
-        fetchFiles(currentPath);  // ✅ Recargar la vista con la carpeta actual
-      } else {
-        showNotification(result.error || 'Error al subir archivos', 'error');
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
       }
-    } catch (error) {
-      showNotification('Error al subir archivos', 'error');
-    }
+    };
+
+    xhr.onload = async () => {
+      if (xhr.status === 200) {
+        showNotification('Archivos subidos correctamente', 'success');
+        fetchFiles(currentPath);
+      } else {
+        showNotification('Error al subir archivos', 'error');
+      }
+      setUploading(false);
+    };
+
+    xhr.onerror = () => {
+      showNotification('Error en la subida', 'error');
+      setUploading(false);
+    };
+
+    xhr.open('POST', `http://naspi.local:5000/api/upload?path=${currentPath}`, true);
+    xhr.send(formData);
   };
 
   const createFolder = async () => {
@@ -181,6 +196,16 @@ export default function FileManager() {
           <Upload className="w-5 h-5 mr-2" /> Subir archivos
         </label>
       </div>
+
+      {/* Barra de progreso */}
+      {uploading && (
+        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2">
+          <div
+            className="bg-blue-600 h-2.5 rounded-full transition-all"
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+        </div>
+      )}
 
       <Card className="bg-white dark:bg-gray-800">
         <CardHeader>
