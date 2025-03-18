@@ -149,34 +149,25 @@ def users():
 # GET:method --> /api/files/<filename> --> file
 # DELETE:method --> /api/files/<filename> --> Eliminar archivo
 #------------------------------------------------------------------------------------------------------------------
-@app.route('/api/files/<path:filepath>', methods=['GET', 'DELETE', 'OPTIONS'])
-def file_operations(filepath):
-    safe_path = os.path.normpath(os.path.join(RAID_PATH, filepath))
-
-    # Evitar acceso fuera del RAID_PATH (prevención de path traversal)
-    if not safe_path.startswith(RAID_PATH):
-        return jsonify({"error": "Acceso denegado"}), 403
+@app.route('/api/files/<path:filename>', methods=['GET', 'DELETE'])
+def file_operations(filename):
+    file_path = os.path.join(RAID_PATH, filename)  # No uses secure_filename aquí
 
     if request.method == 'GET':
         try:
-            directory = os.path.dirname(safe_path)
-            filename = os.path.basename(safe_path)
-            return send_from_directory(directory, filename, as_attachment=True)
+            return send_from_directory(RAID_PATH, filename, as_attachment=True)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
     elif request.method == 'DELETE':
-        if os.path.exists(safe_path) and os.path.isfile(safe_path):
+        if os.path.exists(file_path):
             try:
-                os.remove(safe_path)
+                os.remove(file_path)
                 return jsonify({"message": "Archivo eliminado con éxito"}), 200
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
         else:
             return jsonify({"error": "Archivo no encontrado"}), 404
-
-    elif request.method == 'OPTIONS':
-        return jsonify({"message": "Preflight OK"}), 200
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para subir un archivo
 # POST:method, file --> /api/files
