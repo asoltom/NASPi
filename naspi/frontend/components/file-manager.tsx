@@ -48,6 +48,18 @@ export default function FileManager() {
     }
   };
 
+  const handleEnterFolder = (folderName: string) => {
+    setCurrentPath((prevPath) => (prevPath ? `${prevPath}/${folderName}` : folderName));
+  };
+
+  const handleGoBack = () => {
+    setCurrentPath((prevPath) => {
+      const parts = prevPath.split("/");
+      parts.pop(); // Eliminar la última carpeta
+      return parts.join("/");
+    });
+  };
+
   const handleDownload = async (fileName: string) => {
     try {
       const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`);
@@ -67,7 +79,7 @@ export default function FileManager() {
 
   const handleDelete = async (fileName: string) => {
     try {
-      const fullPath = encodeURIComponent(`${currentPath}/${fileName}`);
+      const fullPath = `${currentPath}/${fileName}`.replace(/\/+/g, '/'); // Elimina dobles slashes
       const response = await fetch(`http://naspi.local:5000/api/files/${fullPath}`, {
         method: 'DELETE',
         headers: {
@@ -160,6 +172,16 @@ export default function FileManager() {
           <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Archivos y Carpetas</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Botón para volver atrás a otra carpeta */}
+          <div className="flex items-center space-x-4 mb-4">
+            {currentPath && (
+              <Button variant="outline" onClick={handleGoBack}>
+                ⬅️ Volver Atrás
+              </Button>
+            )}
+            <span className="text-gray-600 dark:text-gray-300">{currentPath || "Raíz"}</span>
+          </div>
+            {/* Botones para manejar la descarga, eliminación de ficheros y detectar si son Ficheros o Carpetas */}
           <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
             {files.map((item, index) => (
               <div key={index} className={`p-4 border rounded-lg cursor-pointer ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}>
