@@ -50,6 +50,7 @@ export default function FileManager() {
 
   const handleEnterFolder = (folderName: string) => {
     setCurrentPath((prevPath) => (prevPath ? `${prevPath}/${folderName}` : folderName));
+    fetchFiles(currentPath);
   };
 
   const handleGoBack = () => {
@@ -75,6 +76,7 @@ export default function FileManager() {
     } catch (error) {
       showNotification('Error al descargar archivo', 'error');
     }
+    fetchFiles(currentPath);
   };
 
   const handleDelete = async (fileName: string) => {
@@ -96,6 +98,7 @@ export default function FileManager() {
       showNotification('Error en DELETE', 'error');
       console.error("Error en DELETE:", error);
     }
+    fetchFiles(currentPath);
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,7 +192,7 @@ export default function FileManager() {
                 key={index}
                 className={`p-4 border rounded-lg cursor-pointer ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} 
                 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}
-                onClick={() => item.isFolder ? handleEnterFolder(item.name) : null} // 👉 Aquí llamamos a handleEnterFolder
+                onClick={() => item.isFolder ? handleEnterFolder(item.name) : null}
               >
                 {item.isFolder ? (
                   <Folder className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
