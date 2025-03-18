@@ -49,14 +49,15 @@ export default function FileManager() {
   };
 
   const handleEnterFolder = (folderName: string) => {
-    setCurrentPath((prevPath) => (prevPath ? `${prevPath}/${folderName}` : folderName));
-    fetchFiles(currentPath);
+    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+    setCurrentPath(newPath);
+    fetchFiles(newPath);
   };
 
   const handleGoBack = () => {
     setCurrentPath((prevPath) => {
       const parts = prevPath.split("/");
-      parts.pop(); // Eliminar la última carpeta
+      parts.pop();
       return parts.join("/");
     });
   };
@@ -89,6 +90,7 @@ export default function FileManager() {
       });
       const data = await response.json();
       if (response.ok) {
+        showNotification('Archivo eliminado', 'success');
         console.log("Archivo eliminado:", data.message);
       } else {
         showNotification('Error al eliminar', 'error');
