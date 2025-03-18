@@ -79,8 +79,7 @@ export default function FileManager() {
 
   const handleDelete = async (fileName: string) => {
     try {
-      const fullPath = `${currentPath}/${fileName}`.replace(/\/+/g, '/'); // Elimina dobles slashes
-      const response = await fetch(`http://naspi.local:5000/api/files/${fullPath}`, {
+      const response = await fetch(`http://naspi.local:5000/api/files/${fileName}`, {
         method: 'DELETE',
         headers: {
           "Content-Type": "application/json"
@@ -90,9 +89,11 @@ export default function FileManager() {
       if (response.ok) {
         console.log("Archivo eliminado:", data.message);
       } else {
+        showNotification('Error al eliminar', 'error');
         console.error("Error al eliminar:", data.error);
       }
     } catch (error) {
+      showNotification('Error en DELETE', 'error');
       console.error("Error en DELETE:", error);
     }
   };
@@ -181,22 +182,28 @@ export default function FileManager() {
             )}
             <span className="text-gray-600 dark:text-gray-300">{currentPath || "Raíz"}</span>
           </div>
-            {/* Botones para manejar la descarga, eliminación de ficheros y detectar si son Ficheros o Carpetas */}
+          {/* Botones para manejar la descarga, eliminación de ficheros y detectar si son Ficheros o Carpetas */}
           <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'grid-cols-1 gap-2'}`}>
             {files.map((item, index) => (
-              <div key={index} className={`p-4 border rounded-lg cursor-pointer ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}>
+              <div
+                key={index}
+                className={`p-4 border rounded-lg cursor-pointer ${viewMode === 'grid' ? 'text-center' : 'flex items-center'} 
+                dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden`}
+                onClick={() => item.isFolder ? handleEnterFolder(item.name) : null} // 👉 Aquí llamamos a handleEnterFolder
+              >
                 {item.isFolder ? (
                   <Folder className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
                 ) : (
                   <File className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto" />
                 )}
                 <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
+
                 {!item.isFolder && (
                   <div className="flex space-x-2 mt-2">
-                    <Button variant="ghost" onClick={() => handleDownload(item.name)}>
+                    <Button variant="ghost" onClick={(e) => { e.stopPropagation(); handleDownload(item.name); }}>
                       <Download className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" onClick={() => handleDelete(item.name)}>
+                    <Button variant="ghost" onClick={(e) => { e.stopPropagation(); handleDelete(item.name); }}>
                       <Trash className="w-4 h-4 text-red-500" />
                     </Button>
                   </div>
