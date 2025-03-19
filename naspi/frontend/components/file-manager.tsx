@@ -69,6 +69,36 @@ export default function FileManager() {
     });
   };
 
+  const handleDeleteFolder = async () => {
+    if (!currentPath) {
+      showNotification("No puedes eliminar la carpeta raíz", "error");
+      return;
+    }
+
+    const confirmDelete = window.confirm(`¿Seguro que deseas eliminar la carpeta ${currentPath} y todo su contenido?`);
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`http://naspi.local:5000/api/files/${currentPath}`, {
+        method: 'DELETE',
+        headers: { "Content-Type": "application/json" }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showNotification("Carpeta eliminada correctamente", "success");
+        setCurrentPath("");  // Volver a la raíz tras eliminar
+        fetchFiles("");  // Actualizar lista de archivos
+      } else {
+        showNotification(`Error al eliminar: ${data.error}`, "error");
+      }
+    } catch (error) {
+      showNotification("Error en la eliminación", "error");
+      console.error("Error en DELETE:", error);
+    }
+  };
+
   const handleDownload = async (fileName: string) => {
     try {
       const filePath = currentPath ? `${currentPath}/${fileName}` : fileName;
@@ -210,6 +240,9 @@ export default function FileManager() {
           </Button>
           <Button variant="outline" onClick={createFolder}>
             <PlusCircle className="w-4 h-4" /> Crear Carpeta
+          </Button>
+          <Button variant="outline" onClick={handleDeleteFolder}>
+            <Trash className="w-4 h-4 text-red-500" /> Eliminar Carpeta
           </Button>
         </div>
       </div>

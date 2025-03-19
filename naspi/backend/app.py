@@ -6,6 +6,7 @@ import json
 import uuid
 import bcrypt
 import Info_checker as info
+import shutil  # Importamos shutil para eliminar carpetas
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type"])
@@ -205,7 +206,10 @@ def upload():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+    #------------------------------------------------------------------------------------------------------------------
+# Ruta para crear una carpeta
+# POST:method, name:string --> /api/create_folder
+#------------------------------------------------------------------------------------------------------------------
 @app.route('/api/create_folder', methods=['POST'])
 def create_folder():
     try:
@@ -222,24 +226,29 @@ def create_folder():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+#------------------------------------------------------------------------------------------------------------------
+# Ruta para eliminar una carpeta
+# DELETE:method --> /api/files/<path:filename
+#------------------------------------------------------------------------------------------------------------------
+@app.route('/api/files/<path:filename>', methods=['DELETE'])
+def delete_folder(filename):
+    file_path = os.path.join(RAID_PATH, filename)
+
+    if request.method == 'DELETE':
+        if os.path.exists(file_path):
+            try:
+                if os.path.isdir(file_path):
+                    shutil.rmtree(file_path)  # 🔥 Elimina la carpeta y su contenido
+                else:
+                    os.remove(file_path)  # Elimina solo un archivo
+
+                return jsonify({"message": "Eliminación exitosa"}), 200
+
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        else:
+            return jsonify({"error": "Archivo o carpeta no encontrada"}), 404
     
-@app.route('/api/delete_folder', methods=['POST'])
-def delete_folder():
-    try:
-        data = request.get_json()
-        folder_name = data.get("folder_name")
-        folder_path = os.path.join(RAID_PATH, folder_name)
-
-        if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
-            return jsonify({"error": "Folder not found"}), 404
-        if folder_name.lower() == "lost+found":
-            return jsonify({"error": "Cannot delete this folder"}), 400
-
-        os.rmdir(folder_path)  # Solo si está vacía
-        return jsonify({"message": "Folder deleted successfully"})
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para recoger datos de telematica
 # GET:method --> /api/telematic --> [ip,gateway,mask]]
