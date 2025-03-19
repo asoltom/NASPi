@@ -216,14 +216,15 @@ def create_folder():
     try:
         data = request.get_json()
         folder_name = data.get("folder_name")
+        current_path = data.get("current_path", "").strip("/")
 
         if not folder_name or folder_name.lower() == "lost+found":
             return jsonify({"error": "Invalid folder name"}), 400
 
-        folder_path = os.path.join(RAID_PATH, folder_name)
+        folder_path = os.path.join(RAID_PATH, current_path, folder_name) if current_path else os.path.join(RAID_PATH, folder_name)
         os.makedirs(folder_path, exist_ok=True)
 
-        return jsonify({"message": "Folder created successfully", "folder": folder_name})
+        return jsonify({"message": f"Carpeta '{folder_name}' creada en '{current_path}'", "folder": folder_name})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -213,13 +213,17 @@ export default function FileManager() {
     const response = await fetch('http://naspi.local:5000/api/create_folder', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folder_name: folderName }),
+      body: JSON.stringify({
+        folder_name: folderName,
+        current_path: currentPath
+      }),
     });
 
     const data = await response.json();
     showNotification(data.message, response.ok ? 'success' : 'error');
     fetchFiles(currentPath);
   };
+
 
   useEffect(() => {
     fetchFiles();
