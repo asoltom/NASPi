@@ -7,6 +7,7 @@ import uuid
 import bcrypt
 import Info_checker as info
 import shutil  # Importamos shutil para eliminar carpetas
+import traceback  # Esto nos ayudará a capturar errores detallados
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type"])
@@ -238,14 +239,16 @@ def delete_folder(filename):
         if os.path.exists(file_path):
             try:
                 if os.path.isdir(file_path):
-                    shutil.rmtree(file_path)  # 🔥 Elimina la carpeta y su contenido
+                    shutil.rmtree(file_path)  # Elimina la carpeta y su contenido
                 else:
-                    os.remove(file_path)  # Elimina solo un archivo
-
+                    os.remove(file_path)  # Elimina un archivo
+                
                 return jsonify({"message": "Eliminación exitosa"}), 200
 
             except Exception as e:
-                return jsonify({"error": str(e)}), 500
+                error_trace = traceback.format_exc()  # Obtiene el error completo
+                print(f"Error al eliminar: {error_trace}")  # Imprime en consola
+                return jsonify({"error": str(e), "trace": error_trace}), 500
         else:
             return jsonify({"error": "Archivo o carpeta no encontrada"}), 404
     
