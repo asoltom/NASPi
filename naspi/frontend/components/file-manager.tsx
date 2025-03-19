@@ -118,42 +118,63 @@ export default function FileManager() {
     const fileList = event.target.files;
     if (!fileList || fileList.length === 0) return;
 
-    const formData = new FormData();
-    Array.from(fileList).forEach((file) => formData.append('files', file));
-
-    formData.append("path", currentPath); 
-
+    const filesArray = Array.from(fileList);
     setUploading(true);
     setUploadProgress(0);
 
-    const xhr = new XMLHttpRequest();
+    await uploadFilesQueue(filesArray);
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        setUploadProgress(percentComplete);
+    setUploading(false);
+  };
+
+  const uploadFilesQueue = async (files: File[]) => {
+    let completed = 0;
+    const totalFiles = files.length;
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('files', file);
+
+      const safePath = currentPath ? currentPath.trim() : "";
+      formData.append("path", safePath);
+
+      try {
+        await uploadSingleFile(formData);
+        completed++;
+        setUploadProgress(Math.round((completed / totalFiles) * 100));
+      } catch (error) {
+        console.error("Error al subir archivo:", error);
       }
-    };
+    }
 
-    xhr.onload = async () => {
-      if (xhr.status === 200) {
-        showNotification('Archivos subidos correctamente', 'success');
-        fetchFiles(currentPath);
-      } else {
-        showNotification('Error al subir archivos', 'error');
-      }
-      setUploading(false);
-    };
+    fetchFiles(currentPath);  // Recargar archivos después de la subida
+  };
 
-    xhr.onerror = () => {
-      showNotification('Error en la subida', 'error');
-      setUploading(false);
-    };
+  const uploadSingleFile = (formData: FormData) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
 
-    xhr.open('POST', `http://naspi.local:5000/api/upload`, true);
-    xhr.send(formData);
-};
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      };
 
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          resolve(true);
+        } else {
+          reject(new Error(`Error en la subida: ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Error en la conexión"));
+
+      xhr.open('POST', `http://naspi.local:5000/api/upload`, true);
+      xhr.send(formData);
+    });
+  };
 
   const createFolder = async () => {
     const folderName = prompt("Ingrese el nombre de la carpeta:");
