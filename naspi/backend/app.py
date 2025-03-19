@@ -231,27 +231,22 @@ def create_folder():
 # Ruta para eliminar una carpeta
 # DELETE:method --> /api/files/<path:filename
 #------------------------------------------------------------------------------------------------------------------
-@app.route('/api/files/<path:filename>', methods=['DELETE'])
-def delete_folder(filename):
-    file_path = os.path.join(RAID_PATH, filename)
+@app.route('/api/folders/<path:foldername>', methods=['DELETE'])
+def delete_folder(foldername):
+    folder_path = os.path.join(RAID_PATH, foldername)
 
-    if request.method == 'DELETE':
-        if os.path.exists(file_path):
-            try:
-                if os.path.isdir(file_path):
-                    shutil.rmtree(file_path)  # Elimina la carpeta y su contenido
-                else:
-                    os.remove(file_path)  # Elimina un archivo
-                
-                return jsonify({"message": "Eliminación exitosa"}), 200
+    if not os.path.exists(folder_path):
+        return jsonify({"error": "Carpeta no encontrada"}), 404
 
-            except Exception as e:
-                error_trace = traceback.format_exc()  # Obtiene el error completo
-                print(f"Error al eliminar: {error_trace}")  # Imprime en consola
-                return jsonify({"error": str(e), "trace": error_trace}), 500
-        else:
-            return jsonify({"error": "Archivo o carpeta no encontrada"}), 404
-    
+    if not os.path.isdir(folder_path):
+        return jsonify({"error": "No es una carpeta válida"}), 400
+
+    try:
+        shutil.rmtree(folder_path)  # 🔥 Elimina la carpeta y todo su contenido
+        return jsonify({"message": f"Carpeta eliminada correctamente: {foldername}"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para recoger datos de telematica
 # GET:method --> /api/telematic --> [ip,gateway,mask]]

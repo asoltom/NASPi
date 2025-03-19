@@ -79,7 +79,7 @@ export default function FileManager() {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(`http://naspi.local:5000/api/files/${currentPath}`, {
+      const response = await fetch(`http://naspi.local:5000/api/folders/${currentPath}`, {
         method: 'DELETE',
         headers: { "Content-Type": "application/json" }
       });
