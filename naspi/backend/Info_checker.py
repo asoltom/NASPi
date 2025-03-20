@@ -110,11 +110,16 @@ def get_default_gateway():
     """Obtiene la puerta de enlace predeterminada (default gateway)."""
     try:
         gateways = psutil.net_if_stats()
-        for iface, addresses in psutil.net_if_addrs().items():
-            for addr in addresses:
-                if addr.family == socket.AF_INET:
-                    return addr.address
-        return None
+        net_gateways = psutil.net_if_addrs()
+
+        # Buscar en las rutas de red la puerta de enlace
+        for gateway in psutil.net_if_stats():
+            if gateway == "end0":  # Solo tomamos la de "end0"
+                for addr in net_gateways[gateway]:
+                    if addr.family == socket.AF_INET:
+                        return addr.address  # Devuelve la puerta de enlace
+
+        return None  # Si no se encuentra, devolver None
     except Exception as e:
         print(f"Error al obtener la puerta de enlace predeterminada: {e}")
         return None
