@@ -6,6 +6,7 @@ import json
 import uuid
 import bcrypt
 import Info_checker as info
+import NAS_status as NASStatus
 import shutil  # Importamos shutil para eliminar carpetas
 import traceback  # Esto nos ayudará a capturar errores detallados
 
@@ -65,6 +66,24 @@ def list_files():
         folders = [f for f in os.listdir(directory) if os.path.isdir(os.path.join(directory, f))]
 
         return jsonify({"files": files, "folders": folders, "path": current_path})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+#------------------------------------------------------------------------------------------------------------------
+# Ruta para listar archivos
+# GET:method --> /api/nas_status --> files
+#------------------------------------------------------------------------------------------------------------------
+# Rutas API
+@app.route('/api/nas_status', methods=['GET'])
+def NAS_Status():
+    DEVICES = ["/dev/sda", "/dev/sdb", "/dev/sdc"]
+    try:
+        ssd_status = NASStatus.get_smart_status()
+        dev_speed = []
+        for dev in DEVICES:
+            dev_speed.append(NASStatus.get_disk_speed(dev))
+    
+        dev_info = dict(status=ssd_status,speed=dev_speed)
+        return jsonify(dev_info)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
