@@ -51,6 +51,7 @@ export default function SystemSettings() {
   useEffect(() => {
     fetchUsers()
     fetchTelematic()
+    fetchNASStatus()
   }, [])
 
   const fetchUsers = async () => {
