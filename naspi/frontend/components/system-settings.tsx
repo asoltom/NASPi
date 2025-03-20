@@ -34,11 +34,17 @@ interface TelematicData {
   dns: string
 }
 
+interface NASData {
+  status: string
+  speed: string
+}
+
 export default function SystemSettings() {
   const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" })
   const [userMessage, setUserMessage] = useState("")
   const [users, setUsers] = useState<User[]>([])
   const [telematic, setTelematic] = useState<TelematicData | null>(null)
+  const [NASstatus, setNASStatus] = useState<NASData | null>(null)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
@@ -114,6 +120,17 @@ export default function SystemSettings() {
     }
   }
 
+  const fetchNASStatus = async () => {
+    try {
+      const response = await fetch("http://naspi.local:5000/api/nas_status")
+      if (!response.ok) throw new Error("Failed to fetch telematic info")
+      const data: NASData = await response.json()
+      setNASStatus(data)
+    } catch (error) {
+      console.error("Error fetching telematic info:", error)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">System Settings</h1>
@@ -173,16 +190,12 @@ export default function SystemSettings() {
                   <Input id="raid-type" value="RAID 5" readOnly />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="total-capacity">Total Capacity</Label>
-                  <Input id="total-capacity" value="8 TB" readOnly />
+                  <Label htmlFor="ip-address">SSD status</Label>
+                  <Input id="ip-address" value={NASstatus?.status || ""} readOnly />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="used-space">Used Space</Label>
-                  <Input id="used-space" value="3.2 TB" readOnly />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="free-space">Free Space</Label>
-                  <Input id="free-space" value="4.8 TB" readOnly />
+                  <Label htmlFor="ip-address">SSD speed</Label>
+                  <Input id="ip-address" value={NASstatus?.speed || ""} readOnly />
                 </div>
               </div>
             </CardContent>
