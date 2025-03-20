@@ -6,10 +6,11 @@
 #-----------------------------------------------------------------------------------------------------------------------------------
 #Librerias
 import psutil
+import re
 import subprocess
 
 # Lista de discos a monitorear (ajusta según tu configuración)
-DISKS = ["/mnt/raid"]
+DISKS = ["/mnt/raid/files"]
 DEVICES = ["/dev/sda", "/dev/sdb", "/dev/sdc"]
 #-----------------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES
@@ -36,11 +37,21 @@ def get_disk_temperature():
     temperatures = {}
     for device in DEVICES:
         try:
-            temp_output = subprocess.check_output(f"smartctl -A {device} | grep Temperature", shell=True).decode()
-            temp_value = int(temp_output.split()[-1])  # Extraer el último valor (temperatura)
-            temperatures[device] = f"{temp_value}°C"
+            # Ejecutar smartctl con -d sat por si es USB
+            temp_output = subprocess.check_output(f"smartctl -A -d sat {device}", shell=True).decode()
+
+            # Buscar la línea de temperatura usando regex
+            match = re.search(r"Temperature.*?(\d+)\s*C", temp_output)
+            
+            if match:
+                temp_value = int(match.group(1))  # Extraer el número correcto
+                temperatures[device] = f"{temp_value}°C"
+            else:
+                temperatures[device] = "No se encontró temperatura en SMART"
+                
         except Exception as e:
-            temperatures[device] = f"Error: {e}"
+            temperatures[device] = f"Error: {e} (Posible falta de soporte SMART en USB)"
+
     return temperatures
 
 #-----------------------------------------------------------------------------------------------------------------------------------
