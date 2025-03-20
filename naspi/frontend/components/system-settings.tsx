@@ -124,7 +124,13 @@ export default function SystemSettings() {
     try {
       const response = await fetch("http://naspi.local:5000/api/nas_status")
       if (!response.ok) throw new Error("Failed to fetch telematic info")
+      console.log("Response:")
+      console.log(response)
+      
       const data: NASData = await response.json()
+      console.log("Data_NAS:")
+      console.log(data)
+
       setNASStatus(data)
     } catch (error) {
       console.error("Error fetching telematic info:", error)
