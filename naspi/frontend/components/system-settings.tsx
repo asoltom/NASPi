@@ -35,7 +35,7 @@ interface TelematicData {
 }
 
 interface NASData {
-  status: string
+  status: {[key: string]: string}
   speed: string
 }
 
@@ -198,11 +198,15 @@ export default function SystemSettings() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ip-address">SSD status</Label>
-                  <Input id="ip-address" value={NASstatus?.status || ""} readOnly />
+                  <Label htmlFor="ip-address">SSD1: {NASstatus?.status["/dev/sda"] || ""}</Label>
+                  <Label htmlFor="ip-address">SSD2: {NASstatus?.status["/dev/sdb"] || ""}</Label>
+                  <Label htmlFor="ip-address">SSD3: {NASstatus?.status["/dev/sdc"] || ""}</Label>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ip-address">SSD speed</Label>
-                  <Input id="ip-address" value={NASstatus?.speed || ""} readOnly />
+                  <Label htmlFor="ip-address">SSD1: {NASstatus?.speed[0] || ""}</Label>
+                  <Label htmlFor="ip-address">SSD2: {NASstatus?.speed[1] || ""}</Label>
+                  <Label htmlFor="ip-address">SSD3: {NASstatus?.speed[2] || ""}</Label>
                 </div>
               </div>
             </CardContent>

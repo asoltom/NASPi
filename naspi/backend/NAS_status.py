@@ -62,7 +62,7 @@ def get_smart_status():
     smart_status = {}
     for device in DEVICES:
         try:
-            status_output = subprocess.check_output(f"smartctl -H {device}", shell=True).decode()
+            status_output = subprocess.check_output(f"sudo smartctl -H {device}", shell=True).decode()
             if "PASSED" in status_output:
                 smart_status[device] = "Healthy"
             else:
@@ -77,7 +77,7 @@ def get_smart_status():
 #-----------------------------------------------------------------------------------------------------------------------------------
 def get_disk_speed(device):
     try:
-        speed_output = subprocess.check_output(f"hdparm -t {device}", shell=True).decode()
+        speed_output = subprocess.check_output(f"sudo hdparm -t {device}", shell=True).decode()
         speed_line = [line for line in speed_output.split("\n") if "MB/sec" in line]
         return speed_line[0] if speed_line else "No data"
     except Exception as e:
