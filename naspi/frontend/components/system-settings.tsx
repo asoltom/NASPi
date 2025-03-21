@@ -193,35 +193,34 @@ export default function SystemSettings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-4 gap-4">
-                {/* Primera columna: Labels */}
-                <div className="space-y-2">
-                  <Label>RAID Type</Label>
-                  <Label>SSD Status</Label>
-                  <Label>SSD Speed</Label>
-                </div>
-
-                {/* Segunda columna: SSD1 */}
-                <div className="space-y-2">
-                  <Label>RAID 5</Label>
-                  <Label>{NASstatus?.status["/dev/sda"] || ""}</Label>
-                  <Label>{NASstatus?.speed[0] || ""}</Label>
-                </div>
-
-                {/* Tercera columna: SSD2 */}
-                <div className="space-y-2">
-                  <span></span> {/* Espacio vacío para alinear con RAID Type */}
-                  <Label>{NASstatus?.status["/dev/sdb"] || ""}</Label>
-                  <Label>{NASstatus?.speed[1] || ""}</Label>
-                </div>
-
-                {/* Cuarta columna: SSD3 */}
-                <div className="space-y-2">
-                  <span></span> {/* Espacio vacío para alinear con RAID Type */}
-                  <Label>{NASstatus?.status["/dev/sdc"] || ""}</Label>
-                  <Label>{NASstatus?.speed[2] || ""}</Label>
-                </div>
+              <div className="space-y-2">
+                <Label>RAID Type: </Label>
+                <Label>RAID 5</Label>
               </div>
+              <table className="min-w-full border border-gray-300">
+                <thead className="bg-gray-200 dark:bg-gray-700">
+                  <tr>
+                    <th className="border p-2 text-left">SSD Name</th>
+                    <th className="border p-2 text-left">SSD 1</th>
+                    <th className="border p-2 text-left">SSD 2</th>
+                    <th className="border p-2 text-left">SSD 3</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border p-2">SSD Status</td>
+                    <td className="border p-2">Healthy</td>
+                    <td className="border p-2">Healthy</td>
+                    <td className="border p-2">Healthy</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">SSD Speed</td>
+                    <td className="border p-2">358.63 MB/sec</td>
+                    <td className="border p-2">358.63 MB/sec</td>
+                    <td className="border p-2">358.63 MB/sec</td>
+                  </tr>
+                </tbody>
+              </table>
             </CardContent>
           </Card>
         </TabsContent>
