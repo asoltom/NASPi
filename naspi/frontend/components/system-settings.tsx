@@ -35,7 +35,7 @@ interface TelematicData {
 }
 
 interface NASData {
-  status: {[key: string]: string}
+  status: { [key: string]: string }
   speed: string
 }
 
@@ -127,7 +127,7 @@ export default function SystemSettings() {
       if (!response.ok) throw new Error("Failed to fetch telematic info")
       console.log("Response:")
       console.log(response)
-      
+
       const data: NASData = await response.json()
       console.log("Data_NAS:")
       console.log(data)
@@ -188,25 +188,38 @@ export default function SystemSettings() {
         <TabsContent value="storage">
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Storage Settings</CardTitle>
+              <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                Storage Settings
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-4">
+                {/* Primera columna: Labels */}
                 <div className="space-y-2">
-                  <Label htmlFor="raid-type">RAID Type</Label>
-                  <Input id="raid-type" value="RAID 5" readOnly />
+                  <Label>RAID Type</Label>
+                  <Label>SSD Status</Label>
+                  <Label>SSD Speed</Label>
                 </div>
+
+                {/* Segunda columna: SSD1 */}
                 <div className="space-y-2">
-                  <Label htmlFor="ip-address">SSD status</Label>
-                  <Label htmlFor="ip-address">SSD1: {NASstatus?.status["/dev/sda"] || ""}</Label>
-                  <Label htmlFor="ip-address">SSD2: {NASstatus?.status["/dev/sdb"] || ""}</Label>
-                  <Label htmlFor="ip-address">SSD3: {NASstatus?.status["/dev/sdc"] || ""}</Label>
+                  <Label>RAID 5</Label>
+                  <Label>{NASstatus?.status["/dev/sda"] || ""}</Label>
+                  <Label>{NASstatus?.speed[0] || ""}</Label>
                 </div>
+
+                {/* Tercera columna: SSD2 */}
                 <div className="space-y-2">
-                  <Label htmlFor="ip-address">SSD speed</Label>
-                  <Label htmlFor="ip-address">SSD1: {NASstatus?.speed[0] || ""}</Label>
-                  <Label htmlFor="ip-address">SSD2: {NASstatus?.speed[1] || ""}</Label>
-                  <Label htmlFor="ip-address">SSD3: {NASstatus?.speed[2] || ""}</Label>
+                  <span></span> {/* Espacio vacío para alinear con RAID Type */}
+                  <Label>{NASstatus?.status["/dev/sdb"] || ""}</Label>
+                  <Label>{NASstatus?.speed[1] || ""}</Label>
+                </div>
+
+                {/* Cuarta columna: SSD3 */}
+                <div className="space-y-2">
+                  <span></span> {/* Espacio vacío para alinear con RAID Type */}
+                  <Label>{NASstatus?.status["/dev/sdc"] || ""}</Label>
+                  <Label>{NASstatus?.speed[2] || ""}</Label>
                 </div>
               </div>
             </CardContent>

@@ -79,7 +79,14 @@ def get_disk_speed(device):
     try:
         speed_output = subprocess.check_output(f"sudo hdparm -t {device}", shell=True).decode()
         speed_line = [line for line in speed_output.split("\n") if "MB/sec" in line]
-        return speed_line[0] if speed_line else "No data"
+
+        if speed_line:
+            # Buscar solo el valor numérico antes de "MB/sec"
+            match = re.search(r"([\d.]+)\sMB/sec", speed_line[0])
+            if match:
+                return f"{match.group(1)} MB/sec"
+        
+        return "No data"
     except Exception as e:
         return f"Error: {e}"
 
