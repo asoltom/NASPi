@@ -49,10 +49,17 @@ export default function SystemSettings() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
-    fetchUsers()
-    fetchTelematic()
-    fetchNASStatus()
-  }, [])
+    fetchUsers();
+    fetchTelematic();
+    fetchNASStatus();
+
+    // Configurar actualización automática cada 60s (1 minuto)
+    const interval = setInterval(() => {
+      fetchNASStatus();
+    }, 60000);
+
+    return () => clearInterval(interval); // Limpiar intervalo al desmontar
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -209,15 +216,15 @@ export default function SystemSettings() {
                 <tbody>
                   <tr>
                     <td className="border p-2">SSD Status</td>
-                    <td className="border p-2">Healthy</td>
-                    <td className="border p-2">Healthy</td>
-                    <td className="border p-2">Healthy</td>
+                    <td className="border p-2">{NASstatus?.status["/dev/sda"] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.status["/dev/sdb"] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.status["/dev/sdc"] || "Loading..."}</td>
                   </tr>
                   <tr>
                     <td className="border p-2">SSD Speed</td>
-                    <td className="border p-2">358.63 MB/sec</td>
-                    <td className="border p-2">358.63 MB/sec</td>
-                    <td className="border p-2">358.63 MB/sec</td>
+                    <td className="border p-2">{NASstatus?.speed[0] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.speed[1] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.speed[2] || "Loading..."}</td>
                   </tr>
                 </tbody>
               </table>
