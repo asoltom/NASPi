@@ -62,7 +62,7 @@ def get_smart_status():
     smart_status = {}
     for device in DEVICES:
         try:
-            status_output = subprocess.check_output(f"sudo smartctl -H {device}", shell=True).decode()
+            status_output = subprocess.check_output(f"sudo smartctl -H -d scsi {device}", shell=True).decode()
             if "PASSED" in status_output:
                 smart_status[device] = "Healthy"
             else:
