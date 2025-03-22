@@ -58,17 +58,38 @@ def get_disk_temperature():
 # --> get_smart_status() --> smart_status:dict
 # Descripción: Verifica el estado SMART de cada disco y devuelve "Healthy" o "Warning".
 #-----------------------------------------------------------------------------------------------------------------------------------
+def detect_device_type(device):
+    """Intenta detectar el tipo de dispositivo correcto para smartctl."""
+    try:
+        output = subprocess.check_output(["sudo", "smartctl", "-i", device], text=True, stderr=subprocess.STDOUT)
+        if "SATA" in output or "ATA" in output:
+            return "sat"
+        elif "SCSI" in output or "NVMe" in output:
+            return "scsi"
+        else:
+            return "auto"  # Usa auto si no se detecta claramente
+    except subprocess.CalledProcessError:
+        return "auto"
+
 def get_smart_status():
     smart_status = {}
+
     for device in DEVICES:
+        device_type = detect_device_type(device)  # Detecta tipo de dispositivo
         try:
-            status_output = subprocess.check_output(f"sudo smartctl -H -d scsi {device}", shell=True).decode()
-            if "PASSED" in status_output:
+            status_output = subprocess.check_output(
+                ["sudo", "smartctl", "-H", "-d", device_type, device],
+                text=True, stderr=subprocess.STDOUT
+            )
+            if "SMART Health Status: OK" in status_output:
                 smart_status[device] = "Healthy"
             else:
                 smart_status[device] = "Warning"
+        except subprocess.CalledProcessError as e:
+            smart_status[device] = f"Error: {e.output.strip()}"
         except Exception as e:
-            smart_status[device] = f"Error: {e}"
+            smart_status[device] = f"Unexpected Error: {str(e)}"
+
     return smart_status
 
 #-----------------------------------------------------------------------------------------------------------------------------------
