@@ -7,7 +7,6 @@
 import socket
 import psutil
 import shutil
-from gpiozero import CPUTemperature # pip install gpiozero
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Variables Globales
 
@@ -23,19 +22,20 @@ def get_info():
         hostname = socket.gethostname()
     except Exception as e:
         hostname = socket.gethostname()+".local"
-    IPAddr = socket.gethostbyname(hostname)
-    subnet_mask_info = get_subnet_mask(hostname)
+
+    IPAddr = get_ip_address("end0")
+    subnet_mask_info = get_subnet_mask("end0")
     gateway_info = str(get_default_gateway())
 
     RAM_used_GB = round(psutil.virtual_memory()[3]/1000000000, 2) # Memoria RAM usada en GB
     RAM=""+str(RAM_used_GB)+" GB ("+str(psutil.virtual_memory()[2])+"%)"
 
     cpu_usage=str(psutil.cpu_percent(4))+" %"
-    cpu_Temp = CPUTemperature()
+    cpu_Temp = get_cpu_temperature()
 
     disk_stat=get_disk(path=RAID_PATH)
 
-    info = dict(host=hostname,ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info,used_CPU=cpu_usage,Temp_CPU=cpu_Temp,used_RAM=RAM,disk=str(disk_stat))
+    info = dict(host=hostname,ip=IPAddr,mask=subnet_mask_info,gateway=gateway_info,used_CPU=cpu_usage,Temp_CPU=f"{cpu_Temp}°C",used_RAM=RAM,disk=str(disk_stat))
     
     return info
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -47,8 +47,8 @@ def get_telematic_info():
         hostname = socket.gethostname()
     except Exception as e:
         hostname = socket.gethostname()+".local"
-    IPAddr = socket.gethostbyname(hostname)
-    subnet_mask_info = get_subnet_mask(hostname)
+    IPAddr = get_ip_address("end0")
+    subnet_mask_info = get_subnet_mask("end0")
     gateway_info = str(get_default_gateway())
     dns_info = get_dns_info()
 
@@ -64,41 +64,62 @@ def get_hardware_info():
     RAM=""+str(RAM_used_GB)+" GB ("+str(psutil.virtual_memory()[2])+"%)"
 
     cpu_usage=str(psutil.cpu_percent(4))+" %"
-    try:
-        from gpiozero import CPUTemperature  # Importar solo si está disponible
-        cpu_Temp = CPUTemperature().temperature  # Obtener temperatura
-    except (ImportError, AttributeError):
-        cpu_Temp = 0  # Si no se puede calcular, devolver 0
+    cpu_Temp = get_cpu_temperature()
 
     disk_stat=get_disk(path=RAID_PATH)
 
-    info = dict(used_CPU=cpu_usage,Temp_CPU=cpu_Temp,used_RAM=RAM,disk=str(disk_stat))
+    info = dict(used_CPU=cpu_usage,Temp_CPU=f"{cpu_Temp}°C",used_RAM=RAM,disk=str(disk_stat))
     
     return info
 #-----------------------------------------------------------------------------------------------------------------------------------
-def get_subnet_mask(hostname_or_ip):
-    """Obtiene la máscara de subred (subnet mask) de una dirección IP o hostname."""
+def get_ip_address(interface="end0"):
+    """Obtiene la dirección IP de la interfaz de red especificada (por defecto 'end0')."""
     try:
-        ip = socket.gethostbyname(hostname_or_ip)  # Resuelve el hostname a una dirección IP
-        interfaces = psutil.net_if_addrs()  # Obtiene las interfaces de red
-        for iface_addresses in interfaces.values():
-            for address in iface_addresses:
-                if address.address == ip:
-                    return address.netmask
-        return None
+        interfaces = psutil.net_if_addrs()
+        if interface in interfaces:
+            for addr in interfaces[interface]:
+                if addr.family == socket.AF_INET:  # IPv4
+                    return addr.address
     except Exception as e:
-        print(f"Error al obtener la máscara de subred: {e}")
-        return None
+        print(f"Error al obtener la IP de {interface}: {e}")
+    return "No disponible"
+#-----------------------------------------------------------------------------------------------------------------------------------
+def get_subnet_mask(interface="end0"):
+    """Obtiene la máscara de subred de la interfaz especificada."""
+    try:
+        interfaces = psutil.net_if_addrs()
+        if interface in interfaces:
+            for addr in interfaces[interface]:
+                if addr.family == socket.AF_INET:  # IPv4
+                    return addr.netmask
+    except Exception as e:
+        print(f"Error al obtener la máscara de subred de {interface}: {e}")
+    return "No disponible"
+#-----------------------------------------------------------------------------------------------------------------------------------    
+def get_cpu_temperature():
+    """Obtiene la temperatura de la CPU en Raspberry Pi 5"""
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+            temp_millidegrees = int(f.read().strip())  # Leer temperatura en miligrados
+        return temp_millidegrees / 1000.0  # Convertir a grados Celsius
+    except Exception as e:
+        print(f"Error al obtener la temperatura de la CPU: {e}")
+        return None  # Devolver None si falla
 #-----------------------------------------------------------------------------------------------------------------------------------
 def get_default_gateway():
     """Obtiene la puerta de enlace predeterminada (default gateway)."""
     try:
         gateways = psutil.net_if_stats()
-        for iface, addresses in psutil.net_if_addrs().items():
-            for addr in addresses:
-                if addr.family == socket.AF_INET:
-                    return addr.address
-        return None
+        net_gateways = psutil.net_if_addrs()
+
+        # Buscar en las rutas de red la puerta de enlace
+        for gateway in psutil.net_if_stats():
+            if gateway == "end0":  # Solo tomamos la de "end0"
+                for addr in net_gateways[gateway]:
+                    if addr.family == socket.AF_INET:
+                        return addr.address  # Devuelve la puerta de enlace
+
+        return None  # Si no se encuentra, devolver None
     except Exception as e:
         print(f"Error al obtener la puerta de enlace predeterminada: {e}")
         return None

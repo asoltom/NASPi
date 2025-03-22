@@ -34,18 +34,32 @@ interface TelematicData {
   dns: string
 }
 
+interface NASData {
+  status: { [key: string]: string }
+  speed: string
+}
+
 export default function SystemSettings() {
   const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" })
   const [userMessage, setUserMessage] = useState("")
   const [users, setUsers] = useState<User[]>([])
   const [telematic, setTelematic] = useState<TelematicData | null>(null)
+  const [NASstatus, setNASStatus] = useState<NASData | null>(null)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
-    fetchUsers()
-    fetchTelematic()
-  }, [])
+    fetchUsers();
+    fetchTelematic();
+    fetchNASStatus();
+
+    // Configurar actualización automática cada 60s (1 minuto)
+    const interval = setInterval(() => {
+      fetchNASStatus();
+    }, 60000);
+
+    return () => clearInterval(interval); // Limpiar intervalo al desmontar
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -114,6 +128,23 @@ export default function SystemSettings() {
     }
   }
 
+  const fetchNASStatus = async () => {
+    try {
+      const response = await fetch("http://naspi.local:5000/api/nas_status")
+      if (!response.ok) throw new Error("Failed to fetch telematic info")
+      console.log("Response:")
+      console.log(response)
+
+      const data: NASData = await response.json()
+      console.log("Data_NAS:")
+      console.log(data)
+
+      setNASStatus(data)
+    } catch (error) {
+      console.error("Error fetching telematic info:", error)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">System Settings</h1>
@@ -164,27 +195,39 @@ export default function SystemSettings() {
         <TabsContent value="storage">
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">Storage Settings</CardTitle>
+              <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                Storage Settings
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="raid-type">RAID Type</Label>
-                  <Input id="raid-type" value="RAID 5" readOnly />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="total-capacity">Total Capacity</Label>
-                  <Input id="total-capacity" value="8 TB" readOnly />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="used-space">Used Space</Label>
-                  <Input id="used-space" value="3.2 TB" readOnly />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="free-space">Free Space</Label>
-                  <Input id="free-space" value="4.8 TB" readOnly />
-                </div>
+              <div className="space-y-2">
+                <Label>RAID Type: </Label>
+                <Label>RAID 5</Label>
               </div>
+              <table className="min-w-full border border-gray-300">
+                <thead className="bg-gray-200 dark:bg-gray-700">
+                  <tr>
+                    <th className="border p-2 text-left">SSD Name</th>
+                    <th className="border p-2 text-left">SSD 1</th>
+                    <th className="border p-2 text-left">SSD 2</th>
+                    <th className="border p-2 text-left">SSD 3</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border p-2">SSD Status</td>
+                    <td className="border p-2">{NASstatus?.status["/dev/sda"] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.status["/dev/sdb"] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.status["/dev/sdc"] || "Loading..."}</td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2">SSD Speed</td>
+                    <td className="border p-2">{NASstatus?.speed[0] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.speed[1] || "Loading..."}</td>
+                    <td className="border p-2">{NASstatus?.speed[2] || "Loading..."}</td>
+                  </tr>
+                </tbody>
+              </table>
             </CardContent>
           </Card>
         </TabsContent>

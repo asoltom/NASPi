@@ -6,10 +6,11 @@
 #-----------------------------------------------------------------------------------------------------------------------------------
 #Librerias
 import psutil
+import re
 import subprocess
 
 # Lista de discos a monitorear (ajusta según tu configuración)
-DISKS = ["/mnt/raid"]
+DISKS = ["/mnt/raid/files"]
 DEVICES = ["/dev/sda", "/dev/sdb", "/dev/sdc"]
 #-----------------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES
@@ -36,11 +37,21 @@ def get_disk_temperature():
     temperatures = {}
     for device in DEVICES:
         try:
-            temp_output = subprocess.check_output(f"smartctl -A {device} | grep Temperature", shell=True).decode()
-            temp_value = int(temp_output.split()[-1])  # Extraer el último valor (temperatura)
-            temperatures[device] = f"{temp_value}°C"
+            # Ejecutar smartctl con -d sat por si es USB
+            temp_output = subprocess.check_output(f"smartctl -A -d sat {device}", shell=True).decode()
+
+            # Buscar la línea de temperatura usando regex
+            match = re.search(r"Temperature.*?(\d+)\s*C", temp_output)
+            
+            if match:
+                temp_value = int(match.group(1))  # Extraer el número correcto
+                temperatures[device] = f"{temp_value}°C"
+            else:
+                temperatures[device] = "No se encontró temperatura en SMART"
+                
         except Exception as e:
-            temperatures[device] = f"Error: {e}"
+            temperatures[device] = f"Error: {e} (Posible falta de soporte SMART en USB)"
+
     return temperatures
 
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -51,7 +62,7 @@ def get_smart_status():
     smart_status = {}
     for device in DEVICES:
         try:
-            status_output = subprocess.check_output(f"smartctl -H {device}", shell=True).decode()
+            status_output = subprocess.check_output(f"sudo smartctl -H {device}", shell=True).decode()
             if "PASSED" in status_output:
                 smart_status[device] = "Healthy"
             else:
@@ -66,9 +77,16 @@ def get_smart_status():
 #-----------------------------------------------------------------------------------------------------------------------------------
 def get_disk_speed(device):
     try:
-        speed_output = subprocess.check_output(f"hdparm -t {device}", shell=True).decode()
+        speed_output = subprocess.check_output(f"sudo hdparm -t {device}", shell=True).decode()
         speed_line = [line for line in speed_output.split("\n") if "MB/sec" in line]
-        return speed_line[0] if speed_line else "No data"
+
+        if speed_line:
+            # Buscar solo el valor numérico antes de "MB/sec"
+            match = re.search(r"([\d.]+)\sMB/sec", speed_line[0])
+            if match:
+                return f"{match.group(1)} MB/sec"
+        
+        return "No data"
     except Exception as e:
         return f"Error: {e}"
 
