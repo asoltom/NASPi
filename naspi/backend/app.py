@@ -32,7 +32,7 @@ ALLOWED_EXTENSIONS = {
     'ppt', 'pptx', 'zip', 'rar', '7z', 'tar', 'gz', 'tar.gz', 'mp4', 'avi', 'mkv', 'mov', 'wmv'
 }
 
-MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024  # 5GB
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024 * 1024  # 20GB
 
 # Utilidades de usuario
 def read_users():
