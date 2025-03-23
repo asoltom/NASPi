@@ -12,7 +12,7 @@ export default function LoginForm({ onLogin }: { onLogin: (user: any) => void })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('http://naspi.local:5000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
