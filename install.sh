@@ -17,13 +17,25 @@ NEXT_CONFIG="$FRONTEND_DIR/next.config.js"
 # Instalar dependencias
 install_dependencies() {
     echo "🔹 Instalando dependencias del sistema..."
-    sudo apt update && sudo apt full-upgrade -y && sudo apt install smartmontools -y && sudo apt install hdparm -y
-    sudo apt install -y python3 python3-venv python3-pip nodejs npm nginx git docker.io docker-compose
+    # Actualizar e instalar dependencias base
+    sudo apt update && sudo apt full-upgrade -y
+    sudo apt install smartmontools -y && sudo apt install hdparm -y
+
+    # Instalamos la versión v20.19.0 del 13/03/2025 de NodeJS
+    echo "Añadiendo repositorio de NodeSource para Node.js 20.x..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+
+    # Instalar dependencias generales.
+    echo "Instalando nodejs (con npm incluido) y otras dependencias..."
+    sudo apt install -y python3 python3-venv python3-pip nodejs nginx git docker.io docker-compose
+
+    echo "🔹 Dependencias del sistema instaladas."
 }
 
 # Configurar Git y clonar el proyecto
 setup_git() {
     echo "🔹 Configurando Git..."
+    # Clonar solo si el directorio no existe, como en el script original
     [ ! -d "$PROJECT_DIR" ] && git clone -b $BRANCH $GIT_REPO "$PROJECT_DIR"
 }
 
@@ -36,9 +48,10 @@ setup_flask() {
     deactivate
 }
 
-# Configurar Next.js
+# Configurar Next.js build con output: 'export'
 setup_next_config() {
     echo "🔹 Configurando Next.js..."
+    # Contenido exacto del archivo next.config.js proporcionado originalmente
     cat > "$NEXT_CONFIG" <<EOF
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -52,16 +65,28 @@ EOF
 setup_react() {
     echo "🔹 Configurando React..."
     cd "$FRONTEND_DIR"
+
+    # Instalar dependencias listadas en package.json (en tu caso, solo uuid y @types/uuid)
+    echo "Instalando dependencias de package.json..."
     npm install
-    npm install uuid next@latest postcss@latest
+
+    # Instalar versiones específicas de uuid, next y postcss
+    echo "Instalando versiones específicas de uuid, next y postcss (previo a cambios recientes)..."
+
+    npm install uuid@^11.1.0 next@^15.2.0 postcss@^8.4.0
+
     npm audit fix --force
+
     setup_next_config
+
+    echo "Ejecutando 'npm run build'..."
     npm run build
 }
 
 # Crear servicio de Flask
 setup_flask_service() {
     echo "🔹 Creando servicio para Flask..."
+    # Contenido exacto del servicio systemd proporcionado originalmente
     sudo tee /etc/systemd/system/flask.service > /dev/null <<EOF
 [Unit]
 Description=Flask App
@@ -80,11 +105,10 @@ WantedBy=multi-user.target
 EOF
 }
 
-
-
 # Configurar Nginx
 setup_nginx() {
     echo "🔹 Configurando Nginx..."
+    # Contenido exacto del archivo de configuración de Nginx proporcionado originalmente
     sudo tee /etc/nginx/sites-available/proyecto > /dev/null <<EOF
 server {
     listen 80;
@@ -113,6 +137,7 @@ server {
 }
 EOF
 
+    # Enlace simbólico y permisos, como en el script original
     sudo ln -sf /etc/nginx/sites-available/proyecto /etc/nginx/sites-enabled/
 
     sudo chown -R naspi:www-data /mnt/raid
@@ -124,6 +149,7 @@ EOF
 # Configurar rotación de logs
 setup_logrotate() {
     echo "🔹 Configurando logrotate..."
+    # Contenido exacto del archivo logrotate proporcionado originalmente
     sudo tee /etc/logrotate.d/proyecto > /dev/null <<EOF
 /var/log/flask.log
 /var/log/flask_error.log {
@@ -139,6 +165,7 @@ EOF
 # Habilitar y arrancar servicios
 enable_and_start_services() {
     echo "🔹 Iniciando servicios..."
+    # Comandos exactos proporcionados originalmente
     sudo systemctl daemon-reload
     sudo systemctl enable --now flask.service
 }
@@ -153,7 +180,8 @@ instructions() {
 }
 
 permisos_extra() {
-    sudo chmod 777 $BACKEND_DIR/data/users.json  # Permite lectura y escritura
+    # Comandos exactos de permisos extra proporcionados originalmente
+    sudo chmod 777 $BACKEND_DIR/data/users.json # Permite lectura y escritura
     echo "Permisos extra en data/users.json"
 
     sudo chown -R www-data:www-data /home/naspi/NASPi/naspi/frontend/out
@@ -169,6 +197,26 @@ permisos_extra() {
 
 # Ejecutar instalación
 main() {
+    echo "🚀 Iniciando limpieza de caches y directorios de instalación previos..."
+
+    # Limpiar caché de APT
+    echo "🔹 Limpiando caché de APT..."
+    sudo apt clean
+    sudo apt autoremove -y || true # autoremove puede fallar si no hay nada que remover
+
+    # Limpiar caché de npm (forzado para asegurar una limpieza profunda)
+    echo "🔹 Limpiando caché de npm..."
+    npm cache clean --force || true # Usamos || true para que el script no falle si hay un error menor en la limpieza
+
+    # Eliminar directorio node_modules en el frontend para forzar una instalación limpia desde cero
+    if [ -d "$FRONTEND_DIR/node_modules" ]; then
+        echo "🔹 Eliminando directorio node_modules en el frontend..."
+        rm -rf "$FRONTEND_DIR/node_modules"
+    fi
+
+    echo "✅ Limpieza completada. Procediendo con la instalación..."
+    echo "" # Añadir una línea en blanco para mejor legibilidad en la salida
+
     install_dependencies
     setup_git
     setup_flask
@@ -179,6 +227,7 @@ main() {
     enable_and_start_services
     permisos_extra
     instructions
+    echo "✅ Proceso de instalación principal finalizado."
 }
 
 main
