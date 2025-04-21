@@ -99,9 +99,10 @@ def login():
 
         users = read_users()
         user = next((u for u in users if u["username"] == username), None)
+        userpass = check_password(user["password"])
 
         # Comparar contraseñas sin hash
-        if user and user["password"] == password:
+        if user and userpass == password:
             return jsonify({
                 "message": "Login successful",
                 "user": {
