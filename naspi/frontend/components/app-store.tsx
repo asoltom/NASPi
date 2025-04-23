@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Search, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 const BACKEND_API_BASE_URL = 'http://naspi.local:5000/api';
-const ADMIN_API_KEY = 'YOUR_HARDCODED_ADMIN_API_KEY_HERE'; // !!! REEMPLAZA ESTO CON TU CLAVE REAL !!!
+const ADMIN_API_KEY = 'd9Kj@fPzW%x$3sVbL!gT&cQ#mN*hYu0eR1I_aZ2oJl4iKy5Rw6P7sV8'; // !!! REEMPLAZA ESTO CON TU CLAVE REAL !!!
 
 // Mapa para nombres y descripciones amigables de los servicios (basado en las claves de tu backend)
 const serviceDisplayInfo: { [key: string]: { name: string; description: string } } = {
@@ -43,7 +43,7 @@ export default function AppStore() {
             setError(null);
 
             // !!! Verificar si la clave API ha sido REEMPLAZADA del placeholder (básico) !!!
-            if (ADMIN_API_KEY === 'YOUR_HARDCODED_ADMIN_API_KEY_HERE') {
+            if (ADMIN_API_KEY === 'd9Kj@fPzW%x$3sVbL!gT&cQ#mN*hYu0eR1I_aZ2oJl4iKy5Rw6P7sV8') {
                  const configErrorMsg = "Error de configuración: La clave ADMIN_API_KEY no ha sido reemplazada en el código.";
                  setError(configErrorMsg);
                  setLoading(false);
@@ -107,7 +107,7 @@ export default function AppStore() {
     // --- Manejador para el botón Instalar ---
     const handleInstallClick = async (serviceName: string) => {
         // !!! Verificar si la clave API ha sido REEMPLAZADA del placeholder (básico) !!!
-        if (ADMIN_API_KEY === 'YOUR_HARDCODED_ADMIN_API_KEY_HERE') {
+        if (ADMIN_API_KEY === 'd9Kj@fPzW%x$3sVbL!gT&cQ#mN*hYu0eR1I_aZ2oJl4iKy5Rw6P7sV8') {
              setInstallMessage({ serviceName: serviceName, type: 'error', message: 'Error de configuración: Clave ADMIN_API_KEY no ha sido reemplazada.' });
              console.error("ADMIN_API_KEY not replaced");
              return;

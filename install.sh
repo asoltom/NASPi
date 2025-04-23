@@ -316,7 +316,7 @@ permisos_extra() {
     if [ -f "$BACKEND_DIR/data/users.json" ]; then
         sudo chmod 660 "$BACKEND_DIR/data/users.json" # Permitir leer/escribir al propietario y grupo
         sudo chown $USER:$USER "$BACKEND_DIR/data/users.json" # Asegurar que el usuario del backend es el propietario
-        sudo chown $USER:www-data "$BACKEND_DIR/data/users.json" si quieres que www-data tenga acceso
+        sudo chown $USER:www-data "$BACKEND_DIR/data/users.json" # Si quieres que www-data tenga acceso
     else
          echo "Advertencia: Archivo data/users.json no encontrado en $BACKEND_DIR. Si usas autenticación basada en archivos, créalo."
     fi
