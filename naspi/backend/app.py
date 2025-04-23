@@ -289,6 +289,132 @@ def get_hardware():
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+#------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------
+
+# PORTAINER CONFIGURATION AND ROUTES
+
+#------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------
+
+import sys
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+dotenv_path = os.path.join(backend_dir, '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+
+# Agregar el backend al sys.path por si portainer_manager está en el mismo dir
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+try:
+    from portainer_manager import PortainerManager
+except ImportError as e:
+    print(f"Error al importar PortainerManager: {e}")
+    PortainerManager = None
+
+PORTAINER_URL = os.getenv('PORTAINER_URL')
+PORTAINER_USERNAME = os.getenv('PORTAINER_USERNAME')
+PORTAINER_PASSWORD = os.getenv('PORTAINER_PASSWORD')
+try:
+    PORTAINER_ENVIRONMENT_ID = int(os.getenv('PORTAINER_ENVIRONMENT_ID', 1))
+except (ValueError, TypeError):
+    PORTAINER_ENVIRONMENT_ID = 1
+
+ADMIN_API_KEY = os.getenv('ADMIN_API_KEY')
+if not ADMIN_API_KEY or ADMIN_API_KEY == 'replace_with_a_secure_random_key':
+    print("Advertencia: ADMIN_API_KEY no configurada correctamente.")
+
+def is_admin(api_key):
+    return api_key is not None and ADMIN_API_KEY is not None and api_key == ADMIN_API_KEY
+
+def require_admin(func):
+    from functools import wraps
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        admin_key = request.headers.get('X-Admin-API-Key')
+        if not is_admin(admin_key):
+            return jsonify({"success": False, "message": "Autenticación requerida"}), 401
+        return func(*args, **kwargs)
+    return decorated_function
+
+def check_portainer_manager(func):
+    from functools import wraps
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if portainer_manager is None:
+            return jsonify({"success": False, "message": "Gestor de Portainer no inicializado"}), 503
+        return func(*args, **kwargs)
+    return decorated_function
+
+portainer_manager = None
+if PortainerManager and all([PORTAINER_URL, PORTAINER_USERNAME, PORTAINER_PASSWORD, ADMIN_API_KEY]):
+    try:
+        portainer_manager = PortainerManager(PORTAINER_URL, PORTAINER_USERNAME, PORTAINER_PASSWORD, PORTAINER_ENVIRONMENT_ID)
+        print("PortainerManager inicializado")
+    except Exception as e:
+        print(f"Error inicializando PortainerManager: {e}")
+        portainer_manager = None
+
+# RUTAS API PARA PORTAINER
+@app.route('/api/admin/available-services', methods=['GET'])
+@require_admin
+@check_portainer_manager
+def get_available_services_route():
+    available = portainer_manager.get_available_services()
+    return jsonify({"success": True, "available_services": available}), 200
+
+@app.route('/api/admin/install/<service_name>', methods=['POST'])
+@require_admin
+@check_portainer_manager
+def install_service_route(service_name):
+    result, status_code = portainer_manager.install_service(service_name.lower())
+    return jsonify(result), status_code
+
+@app.route('/api/services', methods=['GET'])
+@check_portainer_manager
+def list_services_route():
+    result, status_code = portainer_manager.list_installed_services()
+    return jsonify(result), status_code
+
+@app.route('/api/services/start/<service_name>', methods=['POST'])
+@check_portainer_manager
+def start_service_route(service_name):
+    result, status_code = portainer_manager.start_service(service_name.lower())
+    return jsonify(result), status_code
+
+@app.route('/api/services/stop/<service_name>', methods=['POST'])
+@check_portainer_manager
+def stop_service_route(service_name):
+    result, status_code = portainer_manager.stop_service(service_name.lower())
+    return jsonify(result), status_code
+
+#------------------------------------------------------------------------------------------------------------------
+# MANEJO GLOBAL DE ERRORES
+#------------------------------------------------------------------------------------------------------------------
+@app.errorhandler(401)
+def unauthorized_error(error):
+    return jsonify({"success": False, "message": "No autorizado"}), 401
+
+@app.errorhandler(404)
+def not_found_error(error):
+    if request.path.startswith('/api/'):
+        return jsonify({"success": False, "message": f"Ruta no encontrada: {request.path}"}), 404
+    return error
+
+@app.errorhandler(500)
+def internal_error(error):
+    traceback.print_exc()
+    return jsonify({"success": False, "message": "Error interno del servidor"}), 500
+
+@app.errorhandler(503)
+def service_unavailable_error(error):
+    return jsonify({"success": False, "message": "Servicio Portainer no disponible"}), 503
+
 #------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
