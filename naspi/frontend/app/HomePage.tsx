@@ -8,6 +8,7 @@ import SystemSettings from '@/components/system-settings'
 import AppStore from '@/components/app-store'
 import { LayoutDashboard, FolderOpen, Settings, Store, Moon, Sun, LogOut, Menu, User } from 'lucide-react'
 import LoginForm from '@/components/LoginForm'
+import Services from '@/components/services';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -47,7 +48,9 @@ export default function HomePage() {
       case 'dashboard':
         return <Dashboard user={user} />
       case 'files':
-        return <FileManager />
+        return <FileManager/>
+      case 'services':
+        return <Services/>
       case 'settings':
         return user.role === 'admin' ? <SystemSettings /> : <p>Access denied. Admin rights required.</p>
       case 'apps':
@@ -123,6 +126,14 @@ export default function HomePage() {
                   </Button>
                 </>
               )}
+              <Button
+                variant={activeTab === 'services' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => {setActiveTab('services'); setIsSidebarOpen(false)}}
+              >
+                <FolderOpen className="w-4 h-4 mr-2" />
+                Services
+              </Button>
             </nav>
           </aside>
         )}
