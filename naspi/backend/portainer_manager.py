@@ -122,7 +122,7 @@ volumes:
         auth_url = f"{self.portainer_url}/api/auth"
         payload = {"username": self.username, "password": self.password}
         try:
-            response = requests.post(auth_url, json=payload)
+            response = requests.post(auth_url, json=payload, verify=False)
             response.raise_for_status() # Raise an exception for bad status codes
             data = response.json()
             self._jwt_token = data["jwt"]
@@ -158,7 +158,7 @@ volumes:
 
         try:
             headers = self._get_headers()
-            response = requests.post(deploy_url, headers=headers, json=payload)
+            response = requests.post(deploy_url, headers=headers, json=payload, verify=False)
             response.raise_for_status() # Raise an exception for bad status codes
 
             # Check response - Portainer might return the created stack details
@@ -188,7 +188,7 @@ volumes:
 
         try:
             headers = self._get_headers()
-            response = requests.get(list_url, headers=headers)
+            response = requests.get(list_url, headers=headers, verify=False)
             response.raise_for_status()
             all_stacks = response.json()
 
@@ -249,7 +249,7 @@ volumes:
         list_url = f"{self.portainer_url}/api/stacks?endpointId={self.environment_id}"
         try:
             headers = self._get_headers()
-            response = requests.get(list_url, headers=headers)
+            response = requests.get(list_url, headers=headers, verify=False)
             response.raise_for_status()
             all_stacks = response.json()
             for stack in all_stacks:
@@ -275,7 +275,7 @@ volumes:
 
         try:
             headers = self._get_headers()
-            response = requests.post(start_url, headers=headers)
+            response = requests.post(start_url, headers=headers, verify=False)
             response.raise_for_status()
             return {"success": True, "message": f"Service '{service_name}' ({stack_name}) started."}, 200
         except requests.exceptions.RequestException as e:
@@ -307,7 +307,7 @@ volumes:
 
         try:
             headers = self._get_headers()
-            response = requests.post(stop_url, headers=headers)
+            response = requests.post(stop_url, headers=headers, verify=False) # <--- Añadir verify=False aquí
             response.raise_for_status()
             return {"success": True, "message": f"Service '{service_name}' ({stack_name}) stopped."}, 200
         except requests.exceptions.RequestException as e:
