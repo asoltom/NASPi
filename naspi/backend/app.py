@@ -11,7 +11,7 @@ import shutil  # Importamos shutil para eliminar carpetas
 import traceback  # Esto nos ayudará a capturar errores detallados
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type"])
+CORS(app, origins="http://naspi.local", supports_credentials=True, methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-Admin-API-Key"])
 
 # Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
@@ -365,14 +365,24 @@ if PortainerManager and all([PORTAINER_URL, PORTAINER_USERNAME, PORTAINER_PASSWO
 @require_admin
 @check_portainer_manager
 def get_available_services_route():
-    available = portainer_manager.get_available_services()
-    return jsonify({"success": True, "available_services": available}), 200
+    result, status_code = portainer_manager.get_available_services()
+        # Renombrar la clave para que el frontend la entienda
+    if "services" in result:
+        result["available_services"] = result.pop("services")
+    return jsonify(result), status_code
 
 @app.route('/api/admin/install/<service_name>', methods=['POST'])
 @require_admin
 @check_portainer_manager
 def install_service_route(service_name):
     result, status_code = portainer_manager.install_service(service_name.lower())
+    return jsonify(result), status_code
+
+@app.route('/api/admin/uninstall/<service_name>', methods=['DELETE'])
+@require_admin
+@check_portainer_manager
+def uninstall_service_route(service_name):
+    result, status_code = portainer_manager.uninstall_service(service_name.lower())
     return jsonify(result), status_code
 
 @app.route('/api/services', methods=['GET'])

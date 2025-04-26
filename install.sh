@@ -171,10 +171,15 @@ setup_flask_service() {
 [Unit]
 Description=Flask App
 After=network.target docker.service # Aseguramos que docker esté corriendo antes
+Requires=docker.service
 
 [Service]
 User=$USER
 WorkingDirectory=$BACKEND_DIR
+
+# Esperar a que el contenedor de Portainer esté activo antes de arrancar
+ExecStartPre=/usr/bin/bash -c 'until docker inspect -f "{{.State.Running}}" portainer 2>/dev/null | grep true; do echo "Esperando a que Portainer arranque..."; sleep 3; done'
+
 ExecStart=$VENV_DIR/bin/gunicorn -w 8 -t 1200 -b 0.0.0.0:$FLASK_PORT app:app
 Restart=always
 StandardOutput=append:/var/log/flask.log
