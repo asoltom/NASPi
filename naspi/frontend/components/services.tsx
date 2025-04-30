@@ -3,21 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Play, StopCircle, ExternalLink, CheckCircle2, XCircle, AlertCircle, Package } from 'lucide-react';
+import { Loader2, Play, StopCircle, ExternalLink, CheckCircle2, XCircle, AlertCircle, Settings2 } from 'lucide-react';
 
 const BACKEND_API_BASE_URL = 'http://naspi.local:5000/api';
 const NASPI_BASE_URL = 'http://naspi.local';
-
-const serviceDisplayInfo: { [key: string]: { name: string; description: string } } = {
-    jellyfin: { name: 'Jellyfin Media Server', description: 'Servidor multimedia para tu contenido.' },
-    plex: { name: 'Plex Media Server', description: 'Organiza y transmite tu biblioteca multimedia.' },
-    pihole: { name: 'Pi-hole', description: 'Bloqueador de publicidad a nivel de red.' },
-};
-
-const serviceCustomRoutes: { [key: string]: string } = {
-    plex: '/web',
-    pihole: '/admin/login'
-};
 
 interface ServiceStatus {
     service_name: string;
@@ -47,11 +36,15 @@ const Notification: React.FC<NotificationProps> = ({ message, type }) => (
     </div>
 );
 
+const serviceCustomRoutes: { [key: string]: string } = {
+    plex: '/web',
+    pihole: '/admin' // ← ruta correcta para acceder a la interfaz de Pi-hole
+  };
+
 export default function Services() {
     const [servicesList, setServicesList] = useState<ServiceStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [actionStatus, setActionStatus] = useState<ServiceActionStatus>({});
     const [notification, setNotification] = useState<NotificationProps | null>(null);
 
     const showNotification = (message: string, type: "success" | "error") => {
@@ -60,7 +53,7 @@ export default function Services() {
     };
 
     const fetchServices = async () => {
-        if (servicesList.length === 0) setLoading(true);
+        setLoading(true);
         setError(null);
         try {
             const response = await fetch(`${BACKEND_API_BASE_URL}/services`);
@@ -70,26 +63,18 @@ export default function Services() {
             }
             const data = await response.json();
             if (data.success && Array.isArray(data.services)) {
-                const knownServices = data.services.filter((s: any) => serviceDisplayInfo[s.service_name?.toLowerCase()]);
-
-                const servicesWithDisplayInfo = knownServices.map((service: any) => {
-                    const displayInfo = serviceDisplayInfo[service.service_name.toLowerCase()] || { name: service.service_name, description: 'No description available.' };
-
-                    // Ajustar estado si necesario
+                const fixedList = data.services.map((service: any) => {
                     let fixedStatus = service.status;
                     if ((fixedStatus === 'Error/Unknown' || fixedStatus === 'Error/NoServices') && service.stack_id !== null) {
                         fixedStatus = 'Running';
                     }
-
                     return {
                         ...service,
-                        displayName: displayInfo.name,
-                        description: displayInfo.description,
-                        status: fixedStatus,
+                        status: fixedStatus
                     } as ServiceStatus;
                 });
 
-                setServicesList(servicesWithDisplayInfo);
+                setServicesList(fixedList);
             } else {
                 setError("La respuesta del backend no tiene el formato esperado para la lista de servicios.");
                 setServicesList([]);
@@ -103,15 +88,28 @@ export default function Services() {
         }
     };
 
-    const handleAccessService = (service: ServiceStatus) => {
-        if (service.status === 'Running' && service.access_port) {
-            const routeSuffix = serviceCustomRoutes[service.service_name.toLowerCase()] || '';
-            const accessUrl = `${NASPI_BASE_URL}:${service.access_port}${routeSuffix}`;
-            window.open(accessUrl, '_blank');
-        } else {
-            showNotification(`No se puede acceder a ${service.displayName}.`, 'error');
+    const handleAccessService = (service: ServiceStatus, configMode = false) => {
+        if (service.status !== 'Running') {
+          showNotification(`El servicio ${service.displayName} no está activo.`, 'error');
+          return;
         }
-    };
+      
+        // Acceso personalizado para EmulatorJS
+        if (service.service_name === 'emulatorjs') {
+          const port = configMode ? '10000' : '10001';
+          window.open(`${NASPI_BASE_URL}:${port}`, '_blank');
+          return;
+        }
+      
+        // Acceso con rutas personalizadas (como Pi-hole o Plex)
+        const routeSuffix = serviceCustomRoutes[service.service_name] || '';
+        if (service.access_port) {
+          const accessUrl = `${NASPI_BASE_URL}:${service.access_port}${routeSuffix}`;
+          window.open(accessUrl, '_blank');
+        } else {
+          showNotification(`No se ha definido el puerto de acceso para ${service.displayName}.`, 'error');
+        }
+      };
 
     useEffect(() => {
         fetchServices();
@@ -122,7 +120,6 @@ export default function Services() {
     return (
         <div className="p-4 md:p-6 space-y-6">
             {notification && <Notification message={notification.message} type={notification.type} />}
-
             <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">Servicios Instalados</h1>
 
             {loading && servicesList.length === 0 && (
@@ -146,7 +143,9 @@ export default function Services() {
                             <CardHeader>
                                 <CardTitle className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
                                     <span className="mr-2">
-                                        {service.status === 'Running' ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <AlertCircle className="w-5 h-5 text-red-500" />}
+                                        {service.status === 'Running'
+                                            ? <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                            : <AlertCircle className="w-5 h-5 text-red-500" />}
                                     </span>
                                     {service.displayName}
                                 </CardTitle>
@@ -156,13 +155,22 @@ export default function Services() {
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <p className="text-sm text-gray-700 dark:text-gray-300">{service.description}</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {service.status === 'Running' && service.access_port && (
+                                {service.status === 'Running' && (
+                                    <div className="flex flex-wrap gap-2">
                                         <Button onClick={() => handleAccessService(service)} size="sm">
                                             <ExternalLink className="w-4 h-4 mr-2" /> Acceder
                                         </Button>
-                                    )}
-                                </div>
+                                        {service.service_name === 'emulatorjs' && (
+                                            <Button
+                                                onClick={() => handleAccessService(service, true)}
+                                                size="sm"
+                                                className="bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                                            >
+                                                <Settings2 className="w-4 h-4 mr-2" /> Configuración
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     ))}
