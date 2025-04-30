@@ -4,16 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, XCircle, Trash2 } from 'lucide-react';
-import { Progress } from "@/components/ui/progress";
 
 const BACKEND_API_BASE_URL = 'http://naspi.local:5000/api';
 const ADMIN_API_KEY = "d9Kj@fPzW%x$3sVbL!gT&cQ#mN*hYu0eR1I_aZ2oJl4iKy5Rw6P7sV8";
-
-const serviceDisplayInfo: { [key: string]: { name: string; description: string } } = {
-  jellyfin: { name: 'Jellyfin Media Server', description: 'Servidor multimedia para tu contenido.' },
-  plex: { name: 'Plex Media Server', description: 'Organiza y transmite tu biblioteca multimedia.' },
-  pihole: { name: 'Pi-hole', description: 'Bloqueador de publicidad a nivel de red.' },
-};
 
 interface AvailableService {
   service_name: string;
@@ -50,15 +43,12 @@ export default function AppStore() {
       const data = await response.json();
 
       if (data.success && Array.isArray(data.available_services)) {
-        const apps = data.available_services.map((app: any) => {
-          const displayInfo = serviceDisplayInfo[app.service_name?.toLowerCase()] || { name: app.service_name, description: 'Sin descripción disponible.' };
-          return {
-            service_name: app.service_name,
-            displayName: displayInfo.name,
-            description: displayInfo.description,
-            installed: app.installed,
-          };
-        });
+        const apps = data.available_services.map((app: any) => ({
+          service_name: app.service_name,
+          displayName: app.displayName || app.service_name,
+          description: app.description || 'Sin descripción disponible.',
+          installed: app.installed,
+        }));
 
         setAvailableApps(apps);
 
