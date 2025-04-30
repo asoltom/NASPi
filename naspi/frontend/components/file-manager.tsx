@@ -254,15 +254,12 @@ export default function FileManager() {
       setUploadProgress(0); // 📌 Reset progress bar for the new file
 
       const formData = new FormData();
-      formData.append('file', file); // ❗ Changed key from 'files' to 'file' - usually backend expects one file per request like this
-                                     // If your backend *specifically* handles 'files' for one file, change back.
+      formData.append('files', file);
       const safePath = currentPath ? currentPath.trim() : "";
       formData.append("path", safePath);
 
       try {
-        await uploadSingleFile(formData, file.name); // Pass file name for potential error messages in promise
-        // completed++; // No longer needed for the primary progress state
-        // ❌ REMOVED: setUploadProgress(Math.round((completed / totalFiles) * 100)); // <-- Removed this line
+        await uploadSingleFile(formData, file.name);
       } catch (error: any) { // Use 'any' or specific error type
         console.error(`Error al subir archivo ${file.name}:`, error.message); // Log specific file error
         showNotification(`Error al subir "${file.name}"`, 'error'); // Notify user about specific file failure
