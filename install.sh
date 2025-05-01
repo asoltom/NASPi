@@ -107,7 +107,7 @@ setup_react() {
     # Las versiones más recientes de Next (sin export) son mejores para features, pero requieren Node.js server.
     # Si *necesitas* export estático, Next 13/14 es más común para eso. Ajusta según tu proyecto exacto.
     npm install uuid@^9.0.0 next@^15.2.0 postcss@^8.4.0 --legacy-peer-deps
-
+    npm install zustand
 
     echo "Corrigiendo auditoría npm..."
     # Usa --force con precaución, puede romper cosas
@@ -180,7 +180,7 @@ WorkingDirectory=$BACKEND_DIR
 # Esperar a que el contenedor de Portainer esté activo antes de arrancar
 ExecStartPre=/usr/bin/bash -c 'until docker inspect -f "{{.State.Running}}" portainer 2>/dev/null | grep true; do echo "Esperando a que Portainer arranque..."; sleep 3; done'
 
-ExecStart=$VENV_DIR/bin/gunicorn -w 8 -t 1200 -b 0.0.0.0:$FLASK_PORT app:app
+ExecStart=$VENV_DIR/bin/gunicorn -w 8 --timeout 3600 --limit-request-line 8190 --limit-request-field_size 8190 -b 0.0.0.0:$FLASK_PORT app:app
 Restart=always
 StandardOutput=append:/var/log/flask.log
 StandardError=append:/var/log/flask_error.log
@@ -209,6 +209,7 @@ server {
 
     location /api/ {
         proxy_pass http://naspi.local:$FLASK_PORT/;
+        proxy_request_buffering off;
         proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;

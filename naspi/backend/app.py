@@ -15,9 +15,13 @@ CORS(app, origins="http://naspi.local", supports_credentials=True, methods=["GET
 
 # Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
+CHUNK_UPLOAD_DIR = "/mnt/raid/tmp_chunks"  # Carpeta temporal
 
 if not os.path.exists(RAID_PATH):
     os.makedirs(RAID_PATH)
+
+if not os.path.exists(CHUNK_UPLOAD_DIR):
+    os.makedirs(CHUNK_UPLOAD_DIR)
 
 # Configuración del archivo de usuarios
 USERS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'users.json')
@@ -226,7 +230,71 @@ def upload():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    #------------------------------------------------------------------------------------------------------------------
+
+@app.route('/api/upload_chunk', methods=['POST'])
+def upload_chunk():
+    try:
+        chunk = request.files['chunk']
+        filename = request.form['filename']
+        chunk_index = int(request.form['chunkIndex'])
+        total_chunks = int(request.form['totalChunks'])
+        current_path = request.form.get('path', '')
+
+        upload_dir = os.path.join(RAID_PATH, current_path) if current_path else RAID_PATH
+        os.makedirs(upload_dir, exist_ok=True)
+
+        temp_filename = os.path.join(upload_dir, f".{filename}.uploading")
+        final_filename = os.path.join(upload_dir, filename)
+
+        # Guardar cada chunk en el archivo temporal
+        with open(temp_filename, 'ab') as f:
+            f.write(chunk.read())
+
+        # Verificar si es el último chunk
+        if chunk_index == total_chunks - 1:
+            os.rename(temp_filename, final_filename)
+            return jsonify({"message": "Archivo subido completamente."}), 200
+
+        return jsonify({"message": f"Chunk {chunk_index + 1} recibido."}), 200
+
+    except Exception as e:
+        # 🚨 Si ocurre un error, intentamos limpiar el archivo temporal
+        try:
+            filename = request.form.get('filename', 'unknown')
+            current_path = request.form.get('path', '')
+            upload_dir = os.path.join(RAID_PATH, current_path) if current_path else RAID_PATH
+            temp_file = os.path.join(upload_dir, f".{filename}.uploading")
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        except Exception as cleanup_error:
+            print(f"[ERROR] No se pudo eliminar archivo temporal: {cleanup_error}")
+
+        print(f"[ERROR] Fallo en subida de chunk: {e}")
+        return jsonify({"error": str(e)}), 500
+#------------------------------------------------------------------------------------------------------------------
+# Ruta para cancelar el archivo, o archivos, que se esté subiendo
+# POST --> cancel_upload()
+#------------------------------------------------------------------------------------------------------------------
+@app.route('/api/cancel_upload', methods=['POST'])
+def cancel_upload():
+    try:
+        filename = request.json.get('filename')
+        current_path = request.json.get('path', '')
+        if not filename:
+            return jsonify({"error": "Falta el nombre del archivo"}), 400
+
+        upload_dir = os.path.join(RAID_PATH, current_path) if current_path else RAID_PATH
+        temp_file = os.path.join(upload_dir, f".{filename}.uploading")
+
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+            return jsonify({"message": f"Subida de '{filename}' cancelada y archivo temporal eliminado."}), 200
+        else:
+            return jsonify({"message": "No se encontró archivo temporal para eliminar."}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+#------------------------------------------------------------------------------------------------------------------
 # Ruta para crear una carpeta
 # POST:method, name:string --> /api/create_folder
 #------------------------------------------------------------------------------------------------------------------
