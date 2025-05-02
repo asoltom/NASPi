@@ -214,14 +214,28 @@ export default function FileManager() {
 
       {uploading && (
         <div>
-          <p className="text-sm text-gray-700 dark:text-gray-300">Subiendo: <strong>{uploadingFileName}</strong> ({uploadProgress}%)</p>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Subiendo: <strong>{uploadingFileName}</strong> ({uploadProgress}%)
+          </p>
           <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5">
-            <div className="bg-blue-600 h-2.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }}></div>
+            <div
+              className="bg-blue-600 h-2.5 rounded-full transition-all"
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
           </div>
           <div className="flex gap-2 mt-2">
-            <Button size="sm" onClick={pauseUpload}><Pause className="w-4 h-4 mr-1" /> Pausar</Button>
-            <Button size="sm" onClick={resumeUpload}><Play className="w-4 h-4 mr-1" /> Reanudar</Button>
-            <Button size="sm" onClick={cancelUpload} variant="destructive"><X className="w-4 h-4 mr-1" /> Cancelar</Button>
+            {!paused ? (
+              <Button size="sm" onClick={pauseUpload}>
+                <Pause className="w-4 h-4 mr-1" /> Pausar
+              </Button>
+            ) : (
+              <Button size="sm" onClick={resumeUpload}>
+                <Play className="w-4 h-4 mr-1" /> Reanudar
+              </Button>
+            )}
+            <Button size="sm" onClick={cancelUpload} variant="destructive">
+              <X className="w-4 h-4 mr-1" /> Cancelar
+            </Button>
           </div>
         </div>
       )}

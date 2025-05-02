@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from functools import wraps
 from werkzeug.utils import secure_filename
+import time
 import os
 import json
 import uuid
@@ -16,6 +18,8 @@ CORS(app, origins="http://naspi.local", supports_credentials=True, methods=["GET
 # Configuración del sistema de archivos
 RAID_PATH = "/mnt/raid/files"
 CHUNK_UPLOAD_DIR = "/mnt/raid/tmp_chunks"  # Carpeta temporal
+portainer_manager = None
+has_attempted_restart = False
 
 if not os.path.exists(RAID_PATH):
     os.makedirs(RAID_PATH)
@@ -411,23 +415,29 @@ def require_admin(func):
     return decorated_function
 
 def check_portainer_manager(func):
-    from functools import wraps
     @wraps(func)
     def decorated_function(*args, **kwargs):
+        global portainer_manager
+
+        max_retries = 5
+        delay = 2  # segundos entre intentos
+
+        if portainer_manager is None and PortainerManager and all([PORTAINER_URL, PORTAINER_USERNAME, PORTAINER_PASSWORD, ADMIN_API_KEY]):
+            for attempt in range(max_retries):
+                try:
+                    print(f"🔁 Intentando inicializar PortainerManager (intento {attempt + 1}/{max_retries})...")
+                    portainer_manager = PortainerManager(PORTAINER_URL, PORTAINER_USERNAME, PORTAINER_PASSWORD, PORTAINER_ENVIRONMENT_ID)
+                    print("✅ PortainerManager inicializado correctamente.")
+                    break
+                except Exception as e:
+                    print(f"⚠️ Fallo al inicializar PortainerManager: {e}")
+                    time.sleep(delay)
+
         if portainer_manager is None:
-            return jsonify({"success": False, "message": "Gestor de Portainer no inicializado"}), 503
+            return jsonify({"success": False, "message": "PortainerManager no está disponible"}), 503
+
         return func(*args, **kwargs)
     return decorated_function
-
-portainer_manager = None
-if PortainerManager and all([PORTAINER_URL, PORTAINER_USERNAME, PORTAINER_PASSWORD, ADMIN_API_KEY]):
-    try:
-        portainer_manager = PortainerManager(PORTAINER_URL, PORTAINER_USERNAME, PORTAINER_PASSWORD, PORTAINER_ENVIRONMENT_ID)
-        print("PortainerManager inicializado")
-    except Exception as e:
-        print(f"Error inicializando PortainerManager: {e}")
-        portainer_manager = None
-
 # RUTAS API PARA PORTAINER
 @app.route('/api/admin/available-services', methods=['GET'])
 @require_admin
