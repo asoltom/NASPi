@@ -6,15 +6,37 @@ import Dashboard from '@/components/dashboard'
 import FileManager from '@/components/file-manager'
 import SystemSettings from '@/components/system-settings'
 import AppStore from '@/components/app-store'
-import { LayoutDashboard, FolderOpen, Settings, Store, Moon, Sun, LogOut, Menu, User } from 'lucide-react'
+import {
+  LayoutDashboard,
+  FolderOpen,
+  Settings,
+  Store,
+  Moon,
+  Sun,
+  LogOut,
+  Menu,
+  User,
+  Power
+} from 'lucide-react'
 import LoginForm from '@/components/LoginForm'
-import Services from '@/components/services';
+import Services from '@/components/services'
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog"
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [theme, setTheme] = useState('light')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [showPowerModal, setShowPowerModal] = useState(false)
+  const [powerState, setPowerState] = useState<'idle' | 'rebooting' | 'shuttingDown'>('idle')
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light'
@@ -35,6 +57,18 @@ export default function HomePage() {
     setActiveTab('dashboard')
   }
 
+  const handlePowerAction = async (action: 'reboot' | 'shutdown') => {
+    setPowerState(action === 'reboot' ? 'rebooting' : 'shuttingDown')
+    try {
+      await fetch(`http://naspi.local:5000/api/${action}`, { method: 'POST' })
+      setTimeout(() => {
+        window.location.reload()
+      }, 6000) // 6 segundos
+    } catch (error) {
+      console.error(`Error al intentar ${action}:`, error)
+    }
+  }
+
   const renderContent = () => {
     if (!user) {
       return (
@@ -48,9 +82,9 @@ export default function HomePage() {
       case 'dashboard':
         return <Dashboard user={user} />
       case 'files':
-        return <FileManager/>
+        return <FileManager />
       case 'services':
-        return <Services/>
+        return <Services />
       case 'settings':
         return user.role === 'admin' ? <SystemSettings /> : <p>Access denied. Admin rights required.</p>
       case 'apps':
@@ -80,12 +114,18 @@ export default function HomePage() {
             {theme === 'light' ? <Moon className="h-[1.2rem] w-[1.2rem]" /> : <Sun className="h-[1.2rem] w-[1.2rem]" />}
           </Button>
           {user && (
-            <Button variant="outline" size="icon" onClick={handleLogout}>
-              <LogOut className="h-[1.2rem] w-[1.2rem]" />
-            </Button>
+            <>
+              <Button variant="outline" size="icon" onClick={() => setShowPowerModal(true)}>
+                <Power className="h-[1.2rem] w-[1.2rem] text-red-500" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={handleLogout}>
+                <LogOut className="h-[1.2rem] w-[1.2rem]" />
+              </Button>
+            </>
           )}
         </div>
       </header>
+
       <div className="flex flex-1 overflow-hidden">
         {user && (
           <aside className={`w-48 bg-white dark:bg-gray-800 border-r dark:border-gray-700 overflow-y-auto transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static absolute z-10 h-full`}>
@@ -93,7 +133,7 @@ export default function HomePage() {
               <Button
                 variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
                 className="w-full justify-start"
-                onClick={() => {setActiveTab('dashboard'); setIsSidebarOpen(false)}}
+                onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false) }}
               >
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 Dashboard
@@ -101,7 +141,7 @@ export default function HomePage() {
               <Button
                 variant={activeTab === 'files' ? 'default' : 'ghost'}
                 className="w-full justify-start"
-                onClick={() => {setActiveTab('files'); setIsSidebarOpen(false)}}
+                onClick={() => { setActiveTab('files'); setIsSidebarOpen(false) }}
               >
                 <FolderOpen className="w-4 h-4 mr-2" />
                 File Manager
@@ -111,7 +151,7 @@ export default function HomePage() {
                   <Button
                     variant={activeTab === 'settings' ? 'default' : 'ghost'}
                     className="w-full justify-start"
-                    onClick={() => {setActiveTab('settings'); setIsSidebarOpen(false)}}
+                    onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false) }}
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     System Settings
@@ -119,7 +159,7 @@ export default function HomePage() {
                   <Button
                     variant={activeTab === 'apps' ? 'default' : 'ghost'}
                     className="w-full justify-start"
-                    onClick={() => {setActiveTab('apps'); setIsSidebarOpen(false)}}
+                    onClick={() => { setActiveTab('apps'); setIsSidebarOpen(false) }}
                   >
                     <Store className="w-4 h-4 mr-2" />
                     App Store
@@ -129,7 +169,7 @@ export default function HomePage() {
               <Button
                 variant={activeTab === 'services' ? 'default' : 'ghost'}
                 className="w-full justify-start"
-                onClick={() => {setActiveTab('services'); setIsSidebarOpen(false)}}
+                onClick={() => { setActiveTab('services'); setIsSidebarOpen(false) }}
               >
                 <FolderOpen className="w-4 h-4 mr-2" />
                 Services
@@ -141,7 +181,31 @@ export default function HomePage() {
           {renderContent()}
         </main>
       </div>
+
+      <Dialog open={showPowerModal} onOpenChange={setShowPowerModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Qué deseas hacer con el NASPi?</DialogTitle>
+          </DialogHeader>
+          {powerState === 'idle' ? (
+            <div className="flex justify-end gap-2 mt-4">
+              <Button onClick={() => handlePowerAction("reboot")} className="bg-yellow-500 hover:bg-yellow-600 text-white">
+                Reiniciar
+              </Button>
+              <Button onClick={() => handlePowerAction("shutdown")} className="bg-red-600 hover:bg-red-700 text-white">
+                Apagar
+              </Button>
+              <Button variant="outline" onClick={() => setShowPowerModal(false)}>
+                Cancelar
+              </Button>
+            </div>
+          ) : (
+            <p className="text-center text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6">
+              {powerState === 'rebooting' ? 'Reiniciando NASPi...' : 'Apagando NASPi...'}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-
