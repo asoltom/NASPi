@@ -4,13 +4,14 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 import time
 import os
+import subprocess
 import json
 import uuid
 import bcrypt
 import Info_checker as info
 import NAS_status as NASStatus
 import shutil  # Importamos shutil para eliminar carpetas
-import traceback  # Esto nos ayudará a capturar errores detallados
+import traceback  # Esto ayuda a capturar errores detallados
 
 app = Flask(__name__)
 CORS(app, origins="http://naspi.local", supports_credentials=True, methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-Admin-API-Key"])
@@ -56,6 +57,29 @@ def hash_password(password):
 
 def check_password(password, hashed):
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+#------------------------------------------------------------------------------------------------------------------
+# Ruta para reiniciar NASPi
+# POST:method --> /api/reboot
+#------------------------------------------------------------------------------------------------------------------
+@app.route('/api/reboot', methods=['POST'])
+def reboot():
+    try:
+        # Puedes proteger esto con autenticación si lo deseas
+        subprocess.Popen(['sudo', 'reboot'])
+        return jsonify({"message": "Reiniciando NASPi..."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+#------------------------------------------------------------------------------------------------------------------
+# Ruta para apagar NASPi
+# POST:method --> /api/shutdown
+#------------------------------------------------------------------------------------------------------------------
+@app.route('/api/shutdown', methods=['POST'])
+def shutdown():
+    try:
+        subprocess.Popen(['sudo', 'shutdown', '-h', 'now'])
+        return jsonify({"message": "Apagando NASPi..."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 #------------------------------------------------------------------------------------------------------------------
 # Ruta para listar archivos
 # GET:method --> /api/files --> files
