@@ -20,18 +20,25 @@
     "access_port": "9000",
     "compose": "version: \"3.9\"\nservices:\n  pihole:\n    image: pihole/pihole:latest\n    container_name: pihole\n    network_mode: bridge\n    ports:\n      - \"5354:53/tcp\"\n      - \"5354:53/udp\"\n      - \"9000:80/tcp\"\n    volumes:\n      - pihole_config:/etc/pihole/\n      - pihole_dnsmasq:/etc/dnsmasq.d/\n    environment:\n      - TZ=Europe/Madrid\n      - WEBPASSWORD=admin123\n    dns:\n      - 127.0.0.1\n      - 1.1.1.1\n    restart: unless-stopped\nvolumes:\n  pihole_config:\n  pihole_dnsmasq:"
   },
-  "emulatorjs": {
-    "name": "emulatorjs-stack",
-    "displayName": "EmulatorJS",
-    "description": "Emulador de consolas retro accesible vía navegador.",
-    "access_port": "10001",
-    "compose": "version: \"3.9\"\nservices:\n  emulatorjs:\n    image: lscr.io/linuxserver/emulatorjs\n    container_name: emulatorjs\n    environment:\n      - PUID=0\n      - PGID=0\n      - TZ=Europe/Madrid\n    volumes:\n      - emulatorjs_config:/config\n      - emulatorjs_data:/data\n      - /mnt/raid/files/juegos/3do:/data/3do/roms:ro\n      - /mnt/raid/files/juegos/arcade:/data/arcade/roms:ro\n      - /mnt/raid/files/juegos/atari2600:/data/atari2600/roms:ro\n      - /mnt/raid/files/juegos/atari5200:/data/atari5200/roms:ro\n      - /mnt/raid/files/juegos/atari7800:/data/atari7800/roms:ro\n      - /mnt/raid/files/juegos/colecovision:/data/colecovision/roms:ro\n      - /mnt/raid/files/juegos/doom:/data/doom/roms:ro\n      - /mnt/raid/files/juegos/gb:/data/gb/roms:ro\n      - /mnt/raid/files/juegos/gba:/data/gba/roms:ro\n      - /mnt/raid/files/juegos/gbc:/data/gbc/roms:ro\n      - /mnt/raid/files/juegos/jaguar:/data/jaguar/roms:ro\n      - /mnt/raid/files/juegos/lynx:/data/lynx/roms:ro\n      - /mnt/raid/files/juegos/msx:/data/msx/roms:ro\n      - /mnt/raid/files/juegos/n64:/data/n64/roms:ro\n      - /mnt/raid/files/juegos/nds:/data/nds/roms:ro\n      - /mnt/raid/files/juegos/nes:/data/nes/roms:ro\n      - /mnt/raid/files/juegos/ngp:/data/ngp/roms:ro\n      - /mnt/raid/files/juegos/odyssey2:/data/odyssey2/roms:ro\n      - /mnt/raid/files/juegos/pce:/data/pce/roms:ro\n      - /mnt/raid/files/juegos/psx:/data/psx/roms:ro\n      - /mnt/raid/files/juegos/sega32x:/data/sega32x/roms:ro\n      - /mnt/raid/files/juegos/segaCD:/data/segaCD/roms:ro\n      - /mnt/raid/files/juegos/segaGG:/data/segaGG/roms:ro\n      - /mnt/raid/files/juegos/segaMD:/data/segaMD/roms:ro\n      - /mnt/raid/files/juegos/segaMS:/data/segaMS/roms:ro\n      - /mnt/raid/files/juegos/segaSaturn:/data/segaSaturn/roms:ro\n      - /mnt/raid/files/juegos/segaSG:/data/segaSG/roms:ro\n      - /mnt/raid/files/juegos/snes:/data/snes/roms:ro\n      - /mnt/raid/files/juegos/vb:/data/vb/roms:ro\n      - /mnt/raid/files/juegos/vectrex:/data/vectrex/roms:ro\n      - /mnt/raid/files/juegos/ws:/data/ws/roms:ro\n    ports:\n      - \"10000:3000\"\n      - \"10001:80\"\n    restart: unless-stopped\nvolumes:\n  emulatorjs_config:\n  emulatorjs_data:"
-  },
   "nextcloud": {
     "name": "nextcloud-stack",
     "displayName": "Nextcloud",
     "description": "Solución de almacenamiento en la nube privada para compartir archivos, calendarios y contactos.",
     "access_port": "10002",
     "compose": "version: \"3.9\"\nservices:\n  nextcloud:\n    image: nextcloud\n    container_name: nextcloud\n    ports:\n      - \"10002:80\"\n    volumes:\n      - nextcloud_data:/var/www/html\n    restart: unless-stopped\n    environment:\n      - PUID=1000\n      - PGID=1000\n      - TZ=Europe/Madrid\nvolumes:\n  nextcloud_data:"
+  },
+  "romm": {
+    "name": "romm-stack",
+    "displayName": "ROMM (ROM Manager)",
+    "description": "Frontend moderno para gestión de ROMs con integración a múltiples servicios de scraping.",
+    "access_port": "10003",
+    "compose": "version: \"3.9\"\nservices:\n  romm:\n    image: rommapp/romm:latest\n    container_name: romm\n    restart: unless-stopped\n    environment:\n      - PUID=1000\n      - PGID=1000\n      - DB_HOST=romm-db\n      - DB_NAME=romm\n      - DB_USER=romm-naspi\n      - DB_PASSWD=naspi\n      - ROMM_AUTH_SECRET_KEY=50a9d6bc74c1356220800c2136fcc43a2fdcb97e89401a6b918fe49990b4238f\n      - IGDB_CLIENT_ID=\n      - IGDB_CLIENT_SECRET=\n      - MOBYGAMES_API_KEY=\n      - STEAMGRIDDB_API_KEY=\n      - SCREENSCRAPER_USER=\n      - SCREENSCRAPER_PASSWORD=\n    volumes:\n      - romm_resources:/romm/resources\n      - romm_redis_data:/redis-data\n      - /mnt/raid/files/juegos/roms:/romm/library\n      - /mnt/raid/files/juegos/assets:/romm/assets\n      - /mnt/raid/files/juegos/config:/romm/config\n    ports:\n      - \"11003:80\"\n      - \"10003:8080\"\n      - \"11103:6379\"\n    depends_on:\n      - romm-db\n\n  romm-db:\n    image: mariadb:latest\n    container_name: romm-db\n    restart: unless-stopped\n    environment:\n      - MARIADB_ROOT_PASSWORD=naspi\n      - MARIADB_DATABASE=romm\n      - MARIADB_USER=romm-naspi\n      - MARIADB_PASSWORD=naspi\n    volumes:\n      - mysql_data:/var/lib/mysql\n    healthcheck:\n      test: [\"CMD\", \"healthcheck.sh\", \"--connect\", \"--innodb_initialized\"]\n      start_period: 30s\n      interval: 10s\n      timeout: 5s\n      retries: 5\n\nvolumes:\n  mysql_data:\n  romm_resources:\n  romm_redis_data:"
+  },
+  "homeassistant": {
+    "name": "homeassistant-stack",
+    "displayName": "Home Assistant",
+    "description": "Plataforma de automatización del hogar centrada en la privacidad.",
+    "access_port": "10004",
+    "compose": "version: \"3.9\"\nservices:\n  homeassistant:\n    image: ghcr.io/home-assistant/home-assistant\n    container_name: homeassistant\n    ports:\n      - \"10004:8123\"\n    volumes:\n      - homeassistant_data:/data\n    restart: unless-stopped\nvolumes:\n  homeassistant_data:"
   }
 }

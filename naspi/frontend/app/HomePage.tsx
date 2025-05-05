@@ -37,6 +37,7 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null)
   const [showPowerModal, setShowPowerModal] = useState(false)
   const [powerState, setPowerState] = useState<'idle' | 'rebooting' | 'shuttingDown'>('idle')
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light'
@@ -118,7 +119,7 @@ export default function HomePage() {
               <Button variant="outline" size="icon" onClick={() => setShowPowerModal(true)}>
                 <Power className="h-[1.2rem] w-[1.2rem] text-red-500" />
               </Button>
-              <Button variant="outline" size="icon" onClick={handleLogout}>
+              <Button variant="outline" size="icon" onClick={() => setShowLogoutModal(true)}>
                 <LogOut className="h-[1.2rem] w-[1.2rem]" />
               </Button>
             </>
@@ -204,6 +205,25 @@ export default function HomePage() {
               {powerState === 'rebooting' ? 'Reiniciando NASPi...' : 'Apagando NASPi...'}
             </p>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLogoutModal} onOpenChange={setShowLogoutModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Cerrar sesión?</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que quieres cerrar tu sesión?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button onClick={() => { handleLogout(); setShowLogoutModal(false) }} className="bg-red-600 hover:bg-red-700 text-white">
+              Sí, cerrar sesión
+            </Button>
+            <Button variant="outline" onClick={() => setShowLogoutModal(false)}>
+              Cancelar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
