@@ -1,0 +1,44 @@
+{
+  "plex": {
+    "name": "plex-stack",
+    "displayName": "Plex Media Server",
+    "description": "Organiza y transmite tu biblioteca multimedia personal.",
+    "access_port": "32400",
+    "compose": "version: \"3.9\"\nservices:\n  plex:\n    image: plexinc/pms-docker:latest\n    container_name: plex\n    network_mode: host\n    volumes:\n      - plex_config:/config\n      - plex_transcode:/transcode\n      - /mnt/raid/files/peliculas:/media/movies:ro\n      - /mnt/raid/files/series:/media/tvshows:ro\n    restart: unless-stopped\n    environment:\n      - PUID=1000\n      - PGID=1000\n      - TZ=Europe/Madrid\nvolumes:\n  plex_config:\n  plex_transcode:"
+  },
+  "jellyfin": {
+    "name": "jellyfin-stack",
+    "displayName": "Jellyfin Media Server",
+    "description": "Servidor multimedia gratuito y de código abierto.",
+    "access_port": "8096",
+    "compose": "version: \"3.9\"\nservices:\n  jellyfin:\n    image: jellyfin/jellyfin:latest\n    container_name: jellyfin\n    network_mode: bridge\n    ports:\n      - \"8096:8096\"\n    volumes:\n      - jellyfin_config:/config\n      - jellyfin_cache:/cache\n      - /mnt/raid/files/peliculas:/media/movies:ro\n      - /mnt/raid/files/series:/media/series:ro\n    restart: unless-stopped\n    environment:\n      - PUID=1000\n      - PGID=1000\n      - TZ=Europe/Madrid\nvolumes:\n  jellyfin_config:\n  jellyfin_cache:"
+  },
+  "pihole": {
+    "name": "pihole-stack",
+    "displayName": "Pi-hole",
+    "description": "Bloqueador de publicidad a nivel de red.",
+    "access_port": "9000",
+    "compose": "version: \"3.9\"\nservices:\n  pihole:\n    image: pihole/pihole:latest\n    container_name: pihole\n    network_mode: bridge\n    ports:\n      - \"5354:53/tcp\"\n      - \"5354:53/udp\"\n      - \"9000:80/tcp\"\n    volumes:\n      - pihole_config:/etc/pihole/\n      - pihole_dnsmasq:/etc/dnsmasq.d/\n    environment:\n      - TZ=Europe/Madrid\n      - WEBPASSWORD=admin123\n    dns:\n      - 127.0.0.1\n      - 1.1.1.1\n    restart: unless-stopped\nvolumes:\n  pihole_config:\n  pihole_dnsmasq:"
+  },
+  "nextcloud": {
+    "name": "nextcloud-stack",
+    "displayName": "Nextcloud",
+    "description": "Solución de almacenamiento en la nube privada para compartir archivos, calendarios y contactos.",
+    "access_port": "10002",
+    "compose": "version: \"3.9\"\nservices:\n  nextcloud:\n    image: nextcloud\n    container_name: nextcloud\n    ports:\n      - \"10002:80\"\n    volumes:\n      - nextcloud_data:/var/www/html\n    restart: unless-stopped\n    environment:\n      - PUID=1000\n      - PGID=1000\n      - TZ=Europe/Madrid\nvolumes:\n  nextcloud_data:"
+  },
+  "romm": {
+    "name": "romm-stack",
+    "displayName": "ROMM (ROM Manager)",
+    "description": "Frontend moderno para gestión de ROMs con integración a múltiples servicios de scraping.",
+    "access_port": "10003",
+    "compose": "version: \"3.9\"\nservices:\n  romm:\n    image: rommapp/romm:latest\n    container_name: romm\n    restart: unless-stopped\n    environment:\n      - PUID=1000\n      - PGID=1000\n      - DB_HOST=romm-db\n      - DB_NAME=romm\n      - DB_USER=romm-naspi\n      - DB_PASSWD=naspi\n      - ROMM_AUTH_SECRET_KEY=50a9d6bc74c1356220800c2136fcc43a2fdcb97e89401a6b918fe49990b4238f\n      - IGDB_CLIENT_ID=\n      - IGDB_CLIENT_SECRET=\n      - MOBYGAMES_API_KEY=\n      - STEAMGRIDDB_API_KEY=\n      - SCREENSCRAPER_USER=\n      - SCREENSCRAPER_PASSWORD=\n    volumes:\n      - romm_resources:/romm/resources\n      - romm_redis_data:/redis-data\n      - /mnt/raid/files/juegos/roms:/romm/library\n      - /mnt/raid/files/juegos/assets:/romm/assets\n      - /mnt/raid/files/juegos/config:/romm/config\n    ports:\n      - \"11003:80\"\n      - \"10003:8080\"\n      - \"11103:6379\"\n    depends_on:\n      - romm-db\n\n  romm-db:\n    image: mariadb:latest\n    container_name: romm-db\n    restart: unless-stopped\n    environment:\n      - MARIADB_ROOT_PASSWORD=naspi\n      - MARIADB_DATABASE=romm\n      - MARIADB_USER=romm-naspi\n      - MARIADB_PASSWORD=naspi\n    volumes:\n      - mysql_data:/var/lib/mysql\n    healthcheck:\n      test: [\"CMD\", \"healthcheck.sh\", \"--connect\", \"--innodb_initialized\"]\n      start_period: 30s\n      interval: 10s\n      timeout: 5s\n      retries: 5\n\nvolumes:\n  mysql_data:\n  romm_resources:\n  romm_redis_data:"
+  },
+  "homeassistant": {
+    "name": "homeassistant-stack",
+    "displayName": "Home Assistant",
+    "description": "Plataforma de automatización del hogar centrada en la privacidad.",
+    "access_port": "10004",
+    "compose": "version: \"3.9\"\nservices:\n  homeassistant:\n    image: ghcr.io/home-assistant/home-assistant\n    container_name: homeassistant\n    ports:\n      - \"10004:8123\"\n    volumes:\n      - homeassistant_data:/data\n    restart: unless-stopped\nvolumes:\n  homeassistant_data:"
+  }
+}

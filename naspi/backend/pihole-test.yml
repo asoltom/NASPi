@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    network_mode: bridge
+    ports:
+      - "5354:53/tcp"
+      - "5354:53/udp"
+      - "9000:80/tcp"
+    volumes:
+      - pihole_config:/etc/pihole/
+      - pihole_dnsmasq:/etc/dnsmasq.d/
+    environment:
+      - TZ=Europe/Madrid
+      - WEBPASSWORD=admin123
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    restart: unless-stopped
+
+volumes:
+  pihole_config:
+  pihole_dnsmasq:
