@@ -34,7 +34,7 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const fetchHardware = async () => {
     try {
-      const response = await fetch("http://naspi.local:5000/api/hardware");
+      const response = await fetch("/api/hardware");
       if (!response.ok) throw new Error("Failed to fetch hardware info");
 
       const data = await response.json();

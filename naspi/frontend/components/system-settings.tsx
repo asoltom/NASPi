@@ -63,7 +63,7 @@ export default function SystemSettings() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://naspi.local:5000/api/users")
+      const response = await fetch("/api/users")
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
@@ -76,7 +76,7 @@ export default function SystemSettings() {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch("http://naspi.local:5000/api/users", {
+      const response = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),
@@ -101,7 +101,7 @@ export default function SystemSettings() {
     if (!userToDelete) return
 
     try {
-      const response = await fetch(`http://naspi.local:5000/api/users?id=${userToDelete.id}`, {
+      const response = await fetch(`/api/users?id=${userToDelete.id}`, {
         method: "DELETE",
       })
       const data = await response.json()
@@ -119,7 +119,7 @@ export default function SystemSettings() {
 
   const fetchTelematic = async () => {
     try {
-      const response = await fetch("http://naspi.local:5000/api/telematic")
+      const response = await fetch("/api/telematic")
       if (!response.ok) throw new Error("Failed to fetch telematic info")
       const data: TelematicData = await response.json()
       setTelematic(data)
@@ -130,7 +130,7 @@ export default function SystemSettings() {
 
   const fetchNASStatus = async () => {
     try {
-      const response = await fetch("http://naspi.local:5000/api/nas_status")
+      const response = await fetch("/api/nas_status")
       if (!response.ok) throw new Error("Failed to fetch telematic info")
       console.log("Response:")
       console.log(response)
