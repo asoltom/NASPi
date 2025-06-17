@@ -198,7 +198,7 @@ setup_nginx() {
     sudo tee /etc/nginx/sites-available/proyecto > /dev/null <<EOF
 server {
     listen 80;
-    server_name naspi.local;
+    server_name _;
 
     root $FRONTEND_DIR/out;
     index index.html index.htm;
@@ -208,7 +208,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://naspi.local:$FLASK_PORT/;
+        proxy_pass http://localhost:$FLASK_PORT/api/;
         proxy_request_buffering off;
         proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;

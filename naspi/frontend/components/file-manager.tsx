@@ -87,16 +87,6 @@ export default function FileManager() {
       // Lee el estado directamente del store para la comprobación más actualizada
       if (useUploadStore.getState().cancelled) {
         console.log(`Cancellation check triggered for ${file.name}`); // Debug log
-        // Opcional: Enviar cancelación al backend sólo si es necesario
-        // try {
-        //   await fetch("http://naspi.local:5000/api/cancel_upload", {
-        //     method: "POST",
-        //     headers: { "Content-Type": "application/json" },
-        //     body: JSON.stringify({ filename: file.name, path: path }),
-        //   });
-        // } catch (cancelError) {
-        //   console.error("Error sending cancel signal:", cancelError);
-        // }
         throw new Error("Upload cancelled");
       }
 
