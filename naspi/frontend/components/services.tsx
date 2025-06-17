@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Loader2, Play, StopCircle, ExternalLink, CheckCircle2, XCircle, AlertCircle, Settings2 } from 'lucide-react';
 
-const BACKEND_API_BASE_URL = 'http://naspi.local:5000/api';
+const BACKEND_API_BASE_URL = '/api';
 const NASPI_BASE_URL = 'http://naspi.local';
 
 interface ServiceStatus {

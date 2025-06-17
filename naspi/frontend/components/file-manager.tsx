@@ -59,7 +59,7 @@ export default function FileManager() {
   // --- fetchFiles ahora usa useCallback para evitar re-creaciones innecesarias ---
   const fetchFiles = useCallback(async (path: string = '') => {
     try {
-      const res = await fetch(`http://naspi.local:5000/api/files?path=${encodeURIComponent(path)}`); // Encode path
+      const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`); // Encode path
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); // Check response status
       const data = await res.json();
       const sorted = [
@@ -116,7 +116,7 @@ export default function FileManager() {
       formData.append("path", path || '');
 
       try {
-        const response = await fetch("http://naspi.local:5000/api/upload_chunk", {
+        const response = await fetch("/api/upload_chunk", {
           method: "POST",
           body: formData,
         });
@@ -242,7 +242,7 @@ export default function FileManager() {
          return;
      }
     try {
-      const res = await fetch(`http://naspi.local:5000/api/create_folder`, {
+      const res = await fetch(`/api/create_folder`, {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folder_name: name, current_path: currentPath }),
@@ -267,7 +267,7 @@ export default function FileManager() {
 
     try {
       const encodedPath = encodeURIComponent(currentPath);
-      const response = await fetch(`http://naspi.local:5000/api/folders/${encodedPath}`, {
+      const response = await fetch(`/api/folders/${encodedPath}`, {
         method: 'DELETE',
       });
       const data = await response.json().catch(() => ({})); // Intenta parsear JSON, si no, objeto vacío
@@ -292,7 +292,7 @@ export default function FileManager() {
        const fullPath = currentPath ? `${currentPath}/${fileName}` : fileName;
        const encoded = encodeURIComponent(fullPath);
        try {
-           const res = await fetch(`http://naspi.local:5000/api/files/${encoded}`);
+           const res = await fetch(`/api/files/${encoded}`);
            if (!res.ok) {
                 const errorData = await res.json().catch(()=>({message: res.statusText}));
                throw new Error(errorData.message || `Error ${res.status}`);
@@ -319,7 +319,7 @@ export default function FileManager() {
 
        try {
             const encoded = encodeURIComponent(fullPath);
-            const res = await fetch(`http://naspi.local:5000/api/files/${encoded}`, { method: "DELETE" });
+            const res = await fetch(`/api/files/${encoded}`, { method: "DELETE" });
             const data = await res.json().catch(() => ({})); // Handle non-json responses gracefully
             showNotification(data.message || (res.ok ? "Archivo eliminado" : "Error al eliminar"), res.ok ? "success" : "error");
             if(res.ok) fetchFiles(currentPath); // Refresh on success

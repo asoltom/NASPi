@@ -61,7 +61,7 @@ export default function HomePage() {
   const handlePowerAction = async (action: 'reboot' | 'shutdown') => {
     setPowerState(action === 'reboot' ? 'rebooting' : 'shuttingDown')
     try {
-      await fetch(`http://naspi.local:5000/api/${action}`, { method: 'POST' })
+      await fetch(`/api/${action}`, { method: 'POST' })
       setTimeout(() => {
         window.location.reload()
       }, 6000) // 6 segundos
