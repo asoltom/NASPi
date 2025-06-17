@@ -38,17 +38,16 @@ export default function FileManager() {
     uploading,
     paused,
     cancelled,
-    uploadQueue, // <-- Obtenido del store
+    uploadQueue,
+    globalProgress,
     setUploading,
-    // setPaused, // Ya no se usan directamente si usamos las acciones
-    // setCancelled, // Ya no se usan directamente si usamos las acciones
     pauseUpload,
     resumeUpload,
     cancelUpload,
-    addFileToQueue, // <-- Nueva acción
-    updateFileProgress, // <-- Nueva acción
-    removeFileFromQueue, // <-- Nueva acción
-    resetUploadState // <-- Nueva acción (opcional pero útil)
+    addFileToQueue,
+    updateFileProgress,
+    removeFileFromQueue,
+    resetUploadState
   } = useUploadStore();
 
   const showNotification = (message: string, type: "success" | "error") => {
@@ -338,11 +337,6 @@ export default function FileManager() {
      //   resetUploadState(); // O limpiar selectivamente si es necesario
      // };
   }, [fetchFiles]); // fetchFiles está ahora memoizado con useCallback
-
-  // --- Cálculo del progreso global (leído del store) ---
-  const globalProgress = uploadQueue.length > 0
-    ? Math.floor(uploadQueue.reduce((acc, f) => acc + f.progress, 0) / uploadQueue.length)
-    : 0;
 
   // --- Renderizado ---
   return (
