@@ -9,19 +9,28 @@ interface UploadState {
   uploading: boolean;
   paused: boolean;
   cancelled: boolean;
-  uploadQueue: UploadStatus[];
+  uploadQueue: UploadStatus[];      // Archivos que se están subiendo ahora
+  uploadHistory: UploadStatus[];    // Todos los archivos que han comenzado a subirse (activos o ya subidos)
   globalProgress: number;
+
+  // Estado general
   setUploading: (uploading: boolean) => void;
   setPaused: (paused: boolean) => void;
   setCancelled: (cancelled: boolean) => void;
   setGlobalProgress: (progress: number) => void;
+
+  // Acciones
   pauseUpload: () => void;
   resumeUpload: () => void;
   cancelUpload: () => void;
+
+  // Gestión de colas
   setUploadQueue: (queue: UploadStatus[]) => void;
   addFileToQueue: (fileName: string) => void;
   updateFileProgress: (fileName: string, progress: number) => void;
   removeFileFromQueue: (fileName: string) => void;
+
+  // Reset general
   resetUploadState: () => void;
 }
 
@@ -30,6 +39,7 @@ export const useUploadStore = create<UploadState>((set, get) => ({
   paused: false,
   cancelled: false,
   uploadQueue: [],
+  uploadHistory: [],
   globalProgress: 0,
 
   setUploading: (uploading) => set({ uploading }),
@@ -46,27 +56,44 @@ export const useUploadStore = create<UploadState>((set, get) => ({
 
   setUploadQueue: (queue) => {
     set({ uploadQueue: queue });
-    updateGlobalProgress(queue);
+    updateGlobalProgress(get().uploadHistory); // sigue usando el historial completo
   },
 
   addFileToQueue: (fileName) => {
-    const newQueue = [...get().uploadQueue, { fileName, progress: 0 }];
-    set({ uploadQueue: newQueue });
-    updateGlobalProgress(newQueue);
+    const currentQueue = get().uploadQueue;
+    const currentHistory = get().uploadHistory;
+    const newQueue = [...currentQueue, { fileName, progress: 0 }];
+
+    const alreadyInHistory = currentHistory.some(f => f.fileName === fileName);
+    const newHistory = alreadyInHistory
+      ? currentHistory
+      : [...currentHistory, { fileName, progress: 0 }];
+
+    set({ uploadQueue: newQueue, uploadHistory: newHistory });
+    updateGlobalProgress(newHistory);
   },
 
   updateFileProgress: (fileName, progress) => {
-    const updatedQueue = get().uploadQueue.map((f) =>
-      f.fileName === fileName ? { ...f, progress } : f
-    );
-    set({ uploadQueue: updatedQueue });
-    updateGlobalProgress(updatedQueue);
+    const update = (list: UploadStatus[]) =>
+      list.map(f => (f.fileName === fileName ? { ...f, progress } : f));
+
+    const updatedQueue = update(get().uploadQueue);
+    const updatedHistory = update(get().uploadHistory);
+
+    set({
+      uploadQueue: updatedQueue,
+      uploadHistory: updatedHistory,
+    });
+
+    updateGlobalProgress(updatedHistory);
   },
 
   removeFileFromQueue: (fileName) => {
     const updatedQueue = get().uploadQueue.filter(f => f.fileName !== fileName);
     set({ uploadQueue: updatedQueue });
-    updateGlobalProgress(updatedQueue);
+
+    // ⚠️ No eliminamos de uploadHistory para conservar progreso
+    // globalProgress no cambia aquí: se mantiene
   },
 
   resetUploadState: () => {
@@ -75,14 +102,17 @@ export const useUploadStore = create<UploadState>((set, get) => ({
       paused: false,
       cancelled: false,
       uploadQueue: [],
+      uploadHistory: [],
       globalProgress: 0,
     });
   },
 }));
 
-// Helper para calcular el promedio
-function updateGlobalProgress(queue: UploadStatus[]) {
-  const total = queue.length;
-  const avg = total === 0 ? 0 : Math.floor(queue.reduce((sum, f) => sum + f.progress, 0) / total);
+// 🔄 Cálculo del progreso global basado en uploadHistory
+function updateGlobalProgress(history: UploadStatus[]) {
+  const total = history.length;
+  const avg = total === 0
+    ? 0
+    : Math.floor(history.reduce((sum, f) => sum + f.progress, 0) / total);
   useUploadStore.setState({ globalProgress: avg });
 }
