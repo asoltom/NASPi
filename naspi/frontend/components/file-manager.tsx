@@ -44,6 +44,8 @@ export default function FileManager() {
   const [showDeleteFolderDialog, setShowDeleteFolderDialog] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
   const [currentFolderName, setCurrentFolderName] = useState<string | null>(null);
+  const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   // --- Obteniendo estado y acciones del Store ---
   const {
@@ -224,12 +226,12 @@ export default function FileManager() {
     }
   }, [currentPath, resumeUpload, addFileToQueue, setUploading, uploadFileInChunks, showNotification, removeFileFromQueue, fetchFiles]);
 
-  const createFolder = useCallback(async () => {
-    const name = prompt("Nombre de la nueva carpeta:");
-    if (!name || !/^[a-zA-Z0-9_-\s]+$/.test(name)) { // Validación básica de nombre
-      if (name !== null) showNotification("Nombre de carpeta inválido.", "error");
+  const createFolder = useCallback(async (name: string) => {
+    if (!name || !/^[a-zA-Z0-9_-\s]+$/.test(name)) {
+      showNotification("Nombre de carpeta inválido.", "error");
       return;
     }
+
     try {
       const res = await fetch(`/api/create_folder`, {
         method: "POST",
@@ -238,12 +240,12 @@ export default function FileManager() {
       });
       const data = await res.json();
       showNotification(data.message || (res.ok ? "Carpeta creada" : "Error al crear carpeta"), res.ok ? "success" : "error");
-      if (res.ok) fetchFiles(currentPath); // Refresca si fue exitoso
+      if (res.ok) fetchFiles(currentPath);
     } catch (error: any) {
       showNotification("Error de red al crear carpeta", "error");
       console.error("Create folder error:", error);
     }
-  }, [currentPath, fetchFiles /* , showNotification */]); // Añadir showNotification si su referencia puede cambiar
+  }, [currentPath, fetchFiles, showNotification]);
 
   const handleDeleteFolder = useCallback(async () => {
     if (!currentPath) {
@@ -344,9 +346,14 @@ export default function FileManager() {
           {/* Botones de Vista */}
           <Button onClick={() => setViewMode("grid")} variant={viewMode === 'grid' ? 'secondary' : 'outline'} size="sm"><Grid className="w-4 h-4" /></Button>
           <Button onClick={() => setViewMode("list")} variant={viewMode === 'list' ? 'secondary' : 'outline'} size="sm"><List className="w-4 h-4" /></Button>
-          
+
           {/* Botones de Acción */}
-          <Button onClick={createFolder} size="sm"><PlusCircle className="w-4 h-4 mr-1" /> Crear Carpeta</Button>
+          <Button size="sm" onClick={() => {
+            setNewFolderName('');
+            setShowCreateFolderDialog(true);
+          }}>
+            <PlusCircle className="w-4 h-4 mr-1" /> Crear Carpeta
+          </Button>
           {currentPath && (
             <Button
               variant="destructive"
@@ -523,6 +530,41 @@ export default function FileManager() {
               Sí, eliminar
             </Button>
             <Button variant="outline" onClick={() => setShowDeleteFolderDialog(false)}>
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCreateFolderDialog} onOpenChange={setShowCreateFolderDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear nueva carpeta</DialogTitle>
+            <DialogDescription>
+              Introduce un nombre válido (letras, números, guiones o espacios).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-2">
+            <Input
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Nombre de la carpeta"
+              autoFocus
+            />
+          </div>
+
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button
+              onClick={() => {
+                createFolder(newFolderName.trim());
+                setShowCreateFolderDialog(false);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Crear
+            </Button>
+            <Button variant="outline" onClick={() => setShowCreateFolderDialog(false)}>
               Cancelar
             </Button>
           </DialogFooter>
