@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'; // Añadido useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Folder, File, Grid, List, Upload, Download, Trash, PlusCircle, Pause, Play, X } from 'lucide-react';
-import { useUploadStore } from '../data/uploadStore'; // Asegúrate que la ruta es correcta
+import { useUploadStore } from '../data/uploadStore';
 import {
   Dialog,
   DialogTrigger,
@@ -26,7 +26,7 @@ interface FileItem {
   isFolder: boolean;
 }
 
-// Interface UploadStatus ya definida en el store, no hace falta aquí si no se usa directamente
+// Interface UploadStatus ya definida en uploadStore.ts
 
 const Notification: React.FC<NotificationProps> = ({ message, type }) => (
   <div className={`fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm
@@ -41,7 +41,9 @@ export default function FileManager() {
   const [currentPath, setCurrentPath] = useState<string>('');
   const [notification, setNotification] = useState<NotificationProps | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteFolderDialog, setShowDeleteFolderDialog] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
+  const [currentFolderName, setCurrentFolderName] = useState<string | null>(null);
 
   // --- Obteniendo estado y acciones del Store ---
   const {
@@ -81,8 +83,6 @@ export default function FileManager() {
       console.error("Error cargando archivos:", err.message);
       showNotification("Error cargando archivos", "error");
       setFiles([]);
-      // Podrías querer resetear currentPath aquí también si falla la carga
-      // setCurrentPath('');
     }
   }, [/* Dependencias vacías si showNotification no cambia, o añadir showNotification */]); // Ajustar dependencias si es necesario
 
@@ -132,9 +132,7 @@ export default function FileManager() {
 
       } catch (error) {
         console.error(`Error uploading chunk ${index + 1} for ${file.name}:`, error);
-        // Decide how to handle chunk errors: retry, abort file, abort all?
-        // For now, re-throwing to abort this file's upload.
-        throw error; // Propagate error to handleFileChange
+        throw error;
       }
     }
   }, [updateFileProgress]); // Dependencia de la acción del store
@@ -205,8 +203,6 @@ export default function FileManager() {
       const remainingFiles = useUploadStore.getState().uploadQueue.map(f => f.fileName);
       remainingFiles.forEach(name => removeFileFromQueue(name));
       showNotification("Subida cancelada por el usuario", "error");
-      // Considera resetear el estado cancelado aquí si quieres permitir nuevas subidas inmediatamente
-      // useUploadStore.setState({ cancelled: false });
     }
 
     // Desactiva 'uploading' solo si la cola está vacía después de todo el proceso
@@ -214,10 +210,6 @@ export default function FileManager() {
     setTimeout(() => {
       if (useUploadStore.getState().uploadQueue.length === 0) {
         setUploading(false);
-        // Resetea el estado general si ya no hay nada pendiente
-        // No resetear `cancelled` aquí si quieres que el usuario lo vea
-        // Podrías tener un botón explícito para 'limpiar estado cancelado'
-        // useUploadStore.setState({ paused: false }); // Asegurar que no quede pausado
       }
       // Refresca la lista de archivos *solo si no hubo cancelación* (o siempre, según preferencia)
       if (!useUploadStore.getState().cancelled) {
@@ -232,8 +224,6 @@ export default function FileManager() {
     }
   }, [currentPath, resumeUpload, addFileToQueue, setUploading, uploadFileInChunks, showNotification, removeFileFromQueue, fetchFiles]);
 
-
-  // --- Lógica de V1 re-integrada ---
   const createFolder = useCallback(async () => {
     const name = prompt("Nombre de la nueva carpeta:");
     if (!name || !/^[a-zA-Z0-9_-\s]+$/.test(name)) { // Validación básica de nombre
@@ -261,8 +251,6 @@ export default function FileManager() {
       return;
     }
     const currentFolderName = currentPath.split('/').pop() || 'esta carpeta';
-    const confirmDelete = window.confirm(`¿Seguro que deseas eliminar la carpeta "${currentFolderName}" y todo su contenido?`);
-    if (!confirmDelete) return;
 
     try {
       const encodedPath = encodeURIComponent(currentPath);
@@ -278,12 +266,12 @@ export default function FileManager() {
       } else {
         showNotification(`Error al eliminar "${currentFolderName}": ${data.error || response.statusText}`, "error");
         console.error("Error al eliminar carpeta:", data.error || response.statusText);
-        // fetchFiles(currentPath); // Opcional: Refrescar incluso en error
+        fetchFiles(currentPath); // Opcional: Refrescar incluso en error
       }
     } catch (error: any) {
       showNotification(`Error de red al eliminar la carpeta "${currentFolderName}"`, "error");
       console.error("Error en DELETE folder:", error);
-      // fetchFiles(currentPath); // Opcional: Refrescar incluso en error
+      fetchFiles(currentPath); // Opcional: Refrescar incluso en error
     }
   }, [currentPath, fetchFiles /* , showNotification */]); // Añadir showNotification si su referencia puede cambiar
 
@@ -313,20 +301,21 @@ export default function FileManager() {
 
   const handleDelete = useCallback(async (fileName: string) => {
     const fullPath = currentPath ? `${currentPath}/${fileName}` : fileName;
-    const confirmDelete = window.confirm(`¿Seguro que deseas eliminar el archivo "${fileName}"?`);
-    if (!confirmDelete) return;
 
     try {
       const encoded = encodeURIComponent(fullPath);
       const res = await fetch(`/api/files/${encoded}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({})); // Handle non-json responses gracefully
-      showNotification(data.message || (res.ok ? "Archivo eliminado" : "Error al eliminar"), res.ok ? "success" : "error");
+      showNotification(
+        data.message || (res.ok ? "Archivo eliminado" : "Error al eliminar"),
+        res.ok ? "success" : "error"
+      );
       if (res.ok) fetchFiles(currentPath); // Refresh on success
     } catch (error: any) {
       showNotification(`Error de red al eliminar "${fileName}"`, "error");
       console.error("Delete file error:", error);
     }
-  }, [currentPath, fetchFiles /* , showNotification */]); // Añadir showNotification si su referencia puede cambiar
+  }, [currentPath, fetchFiles, showNotification]);
 
   const handleEnterFolder = useCallback((folderName: string) => {
     const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
@@ -342,27 +331,32 @@ export default function FileManager() {
   // --- Efecto inicial para cargar archivos ---
   useEffect(() => {
     fetchFiles();
-    // Opcional: Limpiar estado de subida si el componente se monta
-    // return () => {
-    //   resetUploadState(); // O limpiar selectivamente si es necesario
-    // };
-  }, [fetchFiles]); // fetchFiles está ahora memoizado con useCallback
+  }, [fetchFiles]);
 
   // --- Renderizado ---
   return (
     <div className="p-4 space-y-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
       {notification && <Notification message={notification.message} type={notification.type} />}
 
-      <div className="flex justify-between items-center flex-wrap gap-2"> {/* flex-wrap para responsividad */}
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h1 className="text-2xl font-bold">File Manager</h1>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           {/* Botones de Vista */}
           <Button onClick={() => setViewMode("grid")} variant={viewMode === 'grid' ? 'secondary' : 'outline'} size="sm"><Grid className="w-4 h-4" /></Button>
           <Button onClick={() => setViewMode("list")} variant={viewMode === 'list' ? 'secondary' : 'outline'} size="sm"><List className="w-4 h-4" /></Button>
+          
           {/* Botones de Acción */}
           <Button onClick={createFolder} size="sm"><PlusCircle className="w-4 h-4 mr-1" /> Crear Carpeta</Button>
           {currentPath && (
-            <Button variant="destructive" onClick={handleDeleteFolder} size="sm"> {/* Cambiado a destructive */}
+            <Button
+              variant="destructive"
+              onClick={() => {
+                const folderName = currentPath.split('/').pop() || 'esta carpeta';
+                setCurrentFolderName(folderName);
+                setShowDeleteFolderDialog(true);
+              }}
+              size="sm"
+            >
               <Trash className="w-4 h-4 mr-1" /> Eliminar Carpeta Actual
             </Button>
           )}
@@ -377,7 +371,7 @@ export default function FileManager() {
         </label>
       </div>
 
-      {/* Sección de Progreso (usa estado del store) */}
+      {/* Sección de Progreso (usa estado del uploadStore) */}
       {uploading && uploadQueue.length > 0 && (
         <Card className="mt-4">
           <CardHeader className="pb-2">
@@ -415,7 +409,7 @@ export default function FileManager() {
             <details className="mt-2 text-sm">
               <summary className="cursor-pointer text-blue-600 hover:underline">Ver detalles</summary>
               <div className="space-y-2 mt-2 max-h-40 overflow-y-auto pr-2"> {/* Scroll si hay muchos */}
-                {uploadQueue.map((upload) => ( // No se necesita index si fileName es único en la cola
+                {uploadQueue.map((upload) => (
                   <div key={upload.fileName}>
                     <p className="text-xs text-gray-600 dark:text-gray-300 truncate">{upload.fileName} ({upload.progress}%)</p>
                     <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2">
@@ -509,6 +503,32 @@ export default function FileManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showDeleteFolderDialog} onOpenChange={setShowDeleteFolderDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar carpeta actual?</DialogTitle>
+            <DialogDescription>
+              ¿Seguro que deseas eliminar la carpeta <strong>{currentFolderName}</strong> y todo su contenido? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => {
+                handleDeleteFolder();
+                setShowDeleteFolderDialog(false); // cerrar diálogo
+              }}
+            >
+              Sí, eliminar
+            </Button>
+            <Button variant="outline" onClick={() => setShowDeleteFolderDialog(false)}>
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
