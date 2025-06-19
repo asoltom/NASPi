@@ -31,14 +31,14 @@ Junto al repositorio se encuentran dos archivos adjuntos
 ### Procedimiento
 
 1. Entrar por SSH a la Raspberry Pi
-2. Ejecutar <./install.sh>
-3. Cuando se termine de instalar todo, ejecutar <omv-firstaid>, configurar "web control panel" (Opción 2), y introducir "8080" como puerto.
+2. Ejecutar `./install.sh`
+3. Cuando se termine de instalar todo, ejecutar `omv-firstaid`, configurar "web control panel" (Opción 2), y introducir "8080" como puerto.
 
 - Aviso: Puede que el dispositivo se reinicie para asimilar todos los cambios.
 4. Entrar por URL a "IP:8080"
 5. Iniciar en OMV (User: admin, Password: openmediavault)
 6. Ir a la sección de plugins y buscar linux-md. Luego, instalarlo
-7. Una vez OMV lo instale, ejecutar en la terminal SSH <./crear_raid5.sh>
+7. Una vez OMV lo instale, ejecutar en la terminal SSH `./crear_raid5.sh`
 
 ---
 El siguiente paso se puede realizar antes o después de OMV.
@@ -62,6 +62,10 @@ Password: admin123
 **Nota:** Estos datos se podrán cambiar o eliminar más adelante.
 
 ![Imagen Login](images/IM_Login.png)
+<p align="center"><em>Vista de Login en Web</em></p>
+
+![Imagen Login](images/IM_Login_Mb.png)
+<p align="center"><em>Vista de Login en Móvil</em></p>
 
 ### Dashboard
 
@@ -79,8 +83,13 @@ A su vez, en la parte izquierda tenemos un menú con el que nos moveremos a lo l
 **Nota:** En formato móbil, dicho menú aparece oculto por defecto, siendo que para activarlo habrá que pinchar encima del icono de menu de 3 rayas horizontales communmente conocido como menú hamburguesa.
 
 ![Imagen Dashboard](images/IM_Dashboard.png)
+<p align="center"><em>Vista del Dashboard en modo día</em></p>
 
 ![Imagen Dashboard Night](images/IM_Dashboard_night.png)
+<p align="center"><em>Vista del Dashboard en modo noche</em></p>
+
+![Imagen Dashboard Móvil](images/IM_Dashboard_Mb.jpeg)
+<p align="center"><em>Vista del Dashboard en Móvil</em></p>
 
 ### Gestión de Ficheros
 
@@ -109,6 +118,7 @@ De haber seguido correctamente las instrucciones de instalación, la ruta donde 
 Para terminar, a modo de mejorar la visualización, existen dos botónes en la parte superior que permiten alternar la vista entre ficheros en fila o ficheros en mosaico.
 
 ![Imagen Gestión de Ficheros](images/IM_FileManager.png)
+<p align="center"><em>Vista de la Gestión de Ficheros</em></p>
 
 ### Ajustes (Admin)
 
@@ -123,12 +133,14 @@ La primera pestaña nos muestra datos relevantes en el campo de la telemática t
 - Lista de servidores DNS
 
 ![Imagen Información Telemática](images/IM_SystemSettings_Network.png)
+<p align="center"><em>Vista de Ajustes - Sección Network</em></p>
 
 #### Información SSD & RAID
 
 La segunda pestaña nos muestra información relativa al estado de salud y velocidad de los SSD que conforman la partición RAID del producto NASPi.
 
 ![Imagen Información SSD](images/IM_SystemSettings_Storage.png)
+<p align="center"><em>Vista de Ajustes - Sección SSD</em></p>
 
 #### Gestión de Usuarios
 
@@ -137,6 +149,7 @@ La tercera pestaña es una sección con la cual el administrador puede añadir m
 **Nota:** Se recomienda borrar el usuario admin por defecto y crear uno nuevo con una contraseña segura.
 
 ![Imagen Gestión de Usuarios](images/IM_SystemSettings_Users.png)
+<p align="center"><em>Vista de Ajustes - Sección Gestión de Usuarios</em></p>
 
 ### Tienda (Admin)
 
@@ -144,6 +157,7 @@ En esta sección, el administrador podrá añadir nuevos servicios al producto h
 La lista de servicios que se pueden instalar está preestablecida siendo únicamente los que se muestran en la siguiente imagen:
 
 ![Imagen Tienda](images/IM_AppStore.png)
+<p align="center"><em>Vista de Tienda</em></p>
 
 Una vez instalado el servicio, se puede desinstalar si así se quiere puesto que el botón de Instalar será reemplazado con Desinstalar.
 
@@ -159,3 +173,4 @@ En caso de los servicios multimedia (Plex y Jellyfin), se crearán dos carpetas 
 En caso del servicio ROMm, se creará una carpeta Juegos en donde se almacenará cualquier contenido relacionado con el servicio. Sin embargo, la subida de ROMs deberá hacerse por la plataforma oficial a la que se accede con el botón "Acceder" y no por "Gestión de Ficheros".
 
 ![Imagen Servicios](images/IM_Services.png)
+<p align="center"><em>Vista de Servicios</em></p>
