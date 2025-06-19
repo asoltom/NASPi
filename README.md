@@ -64,8 +64,11 @@ Password: admin123
 ![Imagen Login](images/IM_Login.png)
 <p align="center"><em>Vista de Login en Web</em></p>
 
-![Imagen Login](images/IM_Login_Mb.png)
-<p align="center"><em>Vista de Login en Móvil</em></p>
+<p align="center">
+  <img src="images/IM_Login_Mb.png" alt="Imagen Login" width="300"/>
+  <br/>
+  <em>Vista de Login en Móvil</em>
+</p>
 
 ### Dashboard
 
