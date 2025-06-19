@@ -59,7 +59,7 @@ Si es la primera vez, el usuario con rol admin por defecto es:
 User: admin
 Password: admin123
 
-Nota: Estos datos se podrán cambiar o eliminar más adelante.
+**Nota:** Estos datos se podrán cambiar o eliminar más adelante.
 
 ![Imagen Login](images/IM_Login.png)
 
@@ -76,9 +76,9 @@ Y el logo de "NASPi" a la parte superior izquierda.
 
 A su vez, en la parte izquierda tenemos un menú con el que nos moveremos a lo largo de las demás partes de la web que veremos en las siguientes secciones.
 
-Nota: En formato móbil, dicho menú aparece oculto por defecto, siendo que para activarlo habrá que pinchar encima del icono de menu de 3 rayas horizontales communmente conocido como menú hamburguesa.
+**Nota:** En formato móbil, dicho menú aparece oculto por defecto, siendo que para activarlo habrá que pinchar encima del icono de menu de 3 rayas horizontales communmente conocido como menú hamburguesa.
 
-![Imagen Dashboard](images/IM_Dashboard)
+![Imagen Dashboard](images/IM_Dashboard.png)
 
 ![Imagen Dashboard Night](images/IM_Dashboard_night.png)
 
@@ -89,7 +89,16 @@ En esta sección de la página, el usuario puede subir, descargar y eliminar arc
 Para subir ficheros, basta con hacer click en el botón "Subir Fichero" y seleccionar los ficheros.
 
 La lista de ficheros aceptables para la subida son:
-'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', '7z', 'tar', 'gz', 'tar.gz', 'mp4', 'avi', 'mkv', 'mov', 'wmv'
+
+| Tipo de archivo | Extensiones admitidas                     |
+|------------------|-------------------------------------------|
+| Texto            | `txt`, `pdf`                              |
+| Imagen           | `png`, `jpg`, `jpeg`, `gif`               |
+| Documento        | `doc`, `docx`                             |
+| Hoja de cálculo  | `xls`, `xlsx`                             |
+| Presentación     | `ppt`, `pptx`                             |
+| Comprimido       | `zip`, `rar`, `7z`, `tar`, `gz`, `tar.gz` |
+| Video            | `mp4`, `avi`, `mkv`, `mov`, `wmv`         |
 
 Mientras se suben los ficheros seleccionados, el usuario puede pausar / reanudar la subida o cancelarla con los botónes que acompañan al proceso de subida de ficheros.
 
@@ -125,7 +134,7 @@ La segunda pestaña nos muestra información relativa al estado de salud y veloc
 
 La tercera pestaña es una sección con la cual el administrador puede añadir más usuarios (con los campos User, Password y Rol). El campo de Rol permite seleccionar entre User o Admin. Por defecto, será User para evitar conflictos.
 
-Nota: Se recomienda borrar el usuario admin por defecto y crear uno nuevo con una contraseña segura.
+**Nota:** Se recomienda borrar el usuario admin por defecto y crear uno nuevo con una contraseña segura.
 
 ![Imagen Gestión de Usuarios](images/IM_SystemSettings_Users.png)
 
@@ -138,16 +147,15 @@ La lista de servicios que se pueden instalar está preestablecida siendo únicam
 
 Una vez instalado el servicio, se puede desinstalar si así se quiere puesto que el botón de Instalar será reemplazado con Desinstalar.
 
-Nota: Los servicios son contenedores de Docker que pueden ser gestionados mediante Portainer y cuya información relevante se encuentra en backend/data/services.json
+**Nota:** Los servicios son contenedores de Docker que pueden ser gestionados mediante Portainer y cuya información relevante se encuentra en "/naspi/backend/data/services.json"
 De querer añadir o eliminar más servicios, estos deberán tener su debido formato de Docker Compose adaptado a la estructura del JSON.
 
 ### Servicios
 
-En esta seccion, los usuarios podrán acceder mediante un botón "Acceder" a los servicios que previamente un administrador ha instalado en el dispositivo
+En esta seccion, los usuarios podrán acceder mediante un botón "Acceder" a los servicios que previamente un administrador ha instalado en el dispositivo.
 
 En caso de los servicios multimedia (Plex y Jellyfin), se crearán dos carpetas (Pelis y Series) para incluir el contenido de manera más facil. Los directorios serán accesibles y editables desde la pestaña Gestion de Ficheros.
 
 En caso del servicio ROMm, se creará una carpeta Juegos en donde se almacenará cualquier contenido relacionado con el servicio. Sin embargo, la subida de ROMs deberá hacerse por la plataforma oficial a la que se accede con el botón "Acceder" y no por "Gestión de Ficheros".
-Si es necesario, se incluye un botón de Configuración en la parte inferior, dentro de la misma sección del servicio, en caso de configurar algo adicional relativo a este mismo.
 
 ![Imagen Servicios](images/IM_Services.png)
