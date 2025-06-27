@@ -1,0 +1,31 @@
+type,method,url,file
+Frontend → API,GET,/api/hardware,frontend\components\dashboard.tsx
+Frontend → API,GET,/api/upload_chunk,frontend\components\file-manager.tsx
+Frontend → API,GET,/api/login,frontend\components\LoginForm.tsx
+Frontend → API,GET,/api/users,frontend\components\system-settings.tsx
+Frontend → API,GET,/api/users,frontend\components\system-settings.tsx
+Frontend → API,GET,/api/telematic,frontend\components\system-settings.tsx
+Frontend → API,GET,/api/nas_status,frontend\components\system-settings.tsx
+API Endpoint,POST,/api/reboot,backend\app.py
+API Endpoint,POST,/api/shutdown,backend\app.py
+API Endpoint,GET,/api/files,backend\app.py
+API Endpoint,GET,/api/nas_status,backend\app.py
+API Endpoint,POST,/api/login,backend\app.py
+API Endpoint,GET,/api/users,backend\app.py
+API Endpoint,POST,/api/users,backend\app.py
+API Endpoint,DELETE,/api/users,backend\app.py
+API Endpoint,GET,/api/files/<path:filename>,backend\app.py
+API Endpoint,DELETE,/api/files/<path:filename>,backend\app.py
+API Endpoint,POST,/api/upload,backend\app.py
+API Endpoint,POST,/api/upload_chunk,backend\app.py
+API Endpoint,POST,/api/cancel_upload,backend\app.py
+API Endpoint,POST,/api/create_folder,backend\app.py
+API Endpoint,DELETE,/api/folders/<path:foldername>,backend\app.py
+API Endpoint,GET,/api/telematic,backend\app.py
+API Endpoint,GET,/api/hardware,backend\app.py
+API Endpoint,GET,/api/admin/available-services,backend\app.py
+API Endpoint,POST,/api/admin/install/<service_name>,backend\app.py
+API Endpoint,DELETE,/api/admin/uninstall/<service_name>,backend\app.py
+API Endpoint,GET,/api/services,backend\app.py
+API Endpoint,POST,/api/services/start/<service_name>,backend\app.py
+API Endpoint,POST,/api/services/stop/<service_name>,backend\app.py
