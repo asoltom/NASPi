@@ -65,7 +65,7 @@ setup_flask() {
     echo "Activando entorno virtual e instalando dependencias Python..."
     source $VENV_DIR/bin/activate
     # !!! MODIFICACION: Añadimos requests y python-dotenv !!!
-    pip install flask flask-cors gunicorn psutil bcrypt requests python-dotenv
+    pip install flask flask-cors gunicorn psutil netifaces bcrypt requests python-dotenv
     deactivate
 
     echo "🔹 Configuración de Flask completada."
