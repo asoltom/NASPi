@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Loader2, Play, StopCircle, ExternalLink, CheckCircle2, XCircle, AlertCircle, Settings2 } from 'lucide-react';
 
-const BACKEND_API_BASE_URL = 'http://naspi.local:5000/api';
-const NASPI_BASE_URL = 'http://naspi.local';
+const BACKEND_API_BASE_URL = '/api';
 
 interface ServiceStatus {
     service_name: string;
@@ -89,6 +88,8 @@ export default function Services() {
     };
 
     const handleAccessService = (service: ServiceStatus, configMode = false) => {
+        const NASPI_BASE_URL = `${window.location.protocol}//${window.location.hostname}`;
+        
         if (service.status !== 'Running') {
           showNotification(`El servicio ${service.displayName} no está activo.`, 'error');
           return;

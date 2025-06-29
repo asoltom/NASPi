@@ -7,6 +7,7 @@
 import socket
 import psutil
 import shutil
+import netifaces
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Variables Globales
 
@@ -109,16 +110,12 @@ def get_cpu_temperature():
 def get_default_gateway():
     """Obtiene la puerta de enlace predeterminada (default gateway)."""
     try:
-        gateways = psutil.net_if_stats()
-        net_gateways = psutil.net_if_addrs()
-
-        # Buscar en las rutas de red la puerta de enlace
-        for gateway in psutil.net_if_stats():
-            if gateway == "end0":  # Solo tomamos la de "end0"
-                for addr in net_gateways[gateway]:
-                    if addr.family == socket.AF_INET:
-                        return addr.address  # Devuelve la puerta de enlace
-
+        gateways = netifaces.gateways()
+        default_gateway = gateways.get('default', {})
+        ipv4_gateway = default_gateway.get(netifaces.AF_INET)
+        if ipv4_gateway:
+            return ipv4_gateway[0]
+        
         return None  # Si no se encuentra, devolver None
     except Exception as e:
         print(f"Error al obtener la puerta de enlace predeterminada: {e}")
